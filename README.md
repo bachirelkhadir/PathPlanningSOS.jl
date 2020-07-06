@@ -48,6 +48,7 @@ opt_trajectory = find_path_using_heuristic(n, moving_disk, edge_size, a, b,
 Show the optimal trajectory.
 
 ```
+using Plots
 # plot setup at time `t`
 t = 0.
 PathPlanningSOS.plot_at_time(0., edge_size, a, b,
