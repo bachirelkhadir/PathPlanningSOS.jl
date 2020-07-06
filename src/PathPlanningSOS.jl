@@ -25,7 +25,7 @@ using PyPlot
 using Random
 using SumOfSquares
 using Test
-
+@pyimport matplotlib.animation as anim
 
 
 
@@ -34,6 +34,10 @@ using Test
 dist_squared(a, b) = sum((a .- b).^2)
 
 
+"""
+Returns the localization matrix (g * mi * mj),
+where mi and mj are monomials in `vars` up to degree `max_deg`.
+"""
 
 function loc_matrix(vars, t, g, max_deg)
     half_deg = (max_deg - maxdegree(subs(g, t=>1))) ÷ 2
@@ -42,6 +46,10 @@ function loc_matrix(vars, t, g, max_deg)
     M
 end
 
+
+```
+Returns a newly created measure `ϕ` in variables `vars`
+```
 
 function measure_in_vars(model, vars, t, max_deg, name)
     mons = monomials(vars, 0:max_deg)
@@ -64,22 +72,23 @@ function measure_in_vars(model, vars, t, max_deg, name)
     return μ, E_μ_tv
 end
 
+```
+Make the matrix M(t) sos on \[0, 1\]
+```
 function make_sos_on_0_1(model, t, M)
-    """
-    Make the matrix M(t) sos on [0, 1]
-    """
-    
+
+
     y = [similarvariable(eltype(M), gensym()) for i in 1:size(M, 1)]
     p = dot(y, M * y)
     domain_t = @set t*(1-t) >= 0
     @constraint(model, p >= 0, domain=domain_t )
 end
 
+```
+Make the matrix M psd
+```
 
 function make_psd(model, M)
-    """
-    Make the matrix M psd
-    """
     if size(M,1) == 1
         @constraint model M[1] >= 0
     else
@@ -196,7 +205,7 @@ function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
 
     Random.seed!(seed)
     uv_k = []
-    
+
     push!(uv_k, scale_init .* (2 .* Random.rand(Float64, (num_pieces, n)) .- 1))
 
     @info "Starting iterative heuristic..."
@@ -224,9 +233,9 @@ function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
 end
 
 
-                    
+
 # Animation helpers
-                    
+
 function plot_levelset(g)
     """
     Plot the set {x | g(x) = 0}
@@ -242,31 +251,35 @@ end
 function plot_at_time(t, edge_size, a, b, eq_obstacles, opt_trajectory)
     PyPlot.xlim(-edge_size*1.1, edge_size*1.1)
     PyPlot.ylim(-edge_size*1.1, edge_size*1.1)
-    
+
     ts = collect(0:0.01:1)
     xts = hcat(opt_trajectory.(ts)...)
     xt = opt_trajectory(t)
     PyPlot.plot(xts[1, :], xts[2, :])
     PyPlot.scatter([xt[1]], [xt[2]], s=100, c="g")
-    
-    
+
+
     for g=eq_obstacles
         plot_levelset((x, y) -> g(t, [x, y]))
     end
-    
+
     PyPlot.scatter([a[1],b[1]], [a[2], b[2]],  s=100, c="r")
 end
 
 
-function show_animation(filename)
+function show_animation_in_notebook(filename)
     base64_video = base64encode(open(filename))
     display("text/html", """<video controls src="data:video/x-m4v;base64,$base64_video">""")
 end
 
-function make_animation(filename, opt_trajectory_pieces; 
+
+function make_animation(filename, opt_trajectory_pieces,
+        constraint_fcts, edge_size, a, b, ;
         num_frames=21, interval_between_frames=100)
-    
+
+    @info "Storing animation in $filename ..."
     opt_trajectory = t -> begin
+        num_pieces = size(opt_trajectory_pieces, 1)
         idx_piece = Int(fld(t * num_pieces, 1))
         idx_piece = min(idx_piece, num_pieces-1)
         piece = opt_trajectory_pieces[idx_piece+1]
@@ -280,14 +293,15 @@ function make_animation(filename, opt_trajectory_pieces;
     function make_frame(i)
         fig.clf()
         t = i/num_frames
-        plot_at_time(t, edge_size, a, b, contraint_fcts, opt_trajectory)
+        plot_at_time(t, edge_size, a, b, constraint_fcts, opt_trajectory)
         PyPlot.title("t = $t")
     end
 
-    withfig(fig) do
-        myanim = anim.FuncAnimation(fig, make_frame, frames=num_frames, interval=interval_between_frames)
+    #withfig(fig) do
+        myanim = anim.FuncAnimation(fig, make_frame,
+            frames=num_frames, interval=interval_between_frames)
         myanim.save(filename, bitrate=-1, extra_args=["-vcodec", "libx264", "-pix_fmt", "yuv420p"])
-    end
+    #end
 end
 
 
