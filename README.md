@@ -1,16 +1,23 @@
 # PathPlanningSOS.jl
 
+# Installation
+
+Open Julia and type-in the following commands to install the required packages.
+
+```
+using Pkg
+Pkg.add("PathPlanningSOS")
+Pkg.add("JuMP")
+Pkg.add("MosekTools") # can be replaced another solver like CSDP or SCS
+```
+
 
 # Example usage
 
 ```
-cd("/home/bachir/Dev/PathPlanningDev")
-using Pkg
-Pkg.activate(".")
-using Revise
 using PathPlanningSOS
 using MosekTools
-using SumOfSquares
+using JuMP
 
 ## Model
 n = 2 # dimension of the space
