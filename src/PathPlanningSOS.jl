@@ -1,17 +1,17 @@
 module PathPlanningSOS
 
 
-export dist_squared
-export loc_matrix
-export measure_in_vars
-export make_sos_on_0_1
-export make_psd
+# export dist_squared
+# export loc_matrix
+# export measure_in_vars
+# export make_sos_on_0_1
+# export make_psd
 export find_path_using_heuristic
-export plot_levelset
-export plot_at_time
-export show_animation
-export make_animation
-
+# export plot_levelset
+# export plot_at_time
+export show_animation_in_notebook
+export make_animation_as_video
+export make_animation_as_plots
 
 
 using Base64
@@ -25,7 +25,7 @@ using PyPlot
 using Random
 using SumOfSquares
 using Test
-@pyimport matplotlib.animation as anim
+anim = pyimport("matplotlib.animation")
 
 
 
@@ -47,9 +47,9 @@ function loc_matrix(vars, t, g, max_deg)
 end
 
 
-```
+"""
 Returns a newly created measure `ϕ` in variables `vars`
-```
+"""
 
 function measure_in_vars(model, vars, t, max_deg, name)
     mons = monomials(vars, 0:max_deg)
@@ -72,9 +72,9 @@ function measure_in_vars(model, vars, t, max_deg, name)
     return μ, E_μ_tv
 end
 
-```
-Make the matrix M(t) sos on \[0, 1\]
-```
+"""
+Make the matrix M(t) sos on [0, 1].
+"""
 function make_sos_on_0_1(model, t, M)
 
 
@@ -84,9 +84,9 @@ function make_sos_on_0_1(model, t, M)
     @constraint(model, p >= 0, domain=domain_t )
 end
 
-```
+"""
 Make the matrix M psd
-```
+"""
 
 function make_psd(model, M)
     if size(M,1) == 1
@@ -101,9 +101,9 @@ end
 
 function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
     max_deg_uv, num_pieces, solver,
-    reg, weight_lenght,
+    weight_lenght,
     num_iterations,
-    scale_init; seed=0)
+    ;scale_init=1, reg=0, seed=0)
 
 
     @polyvar u[1:n]
@@ -228,11 +228,24 @@ function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
 
         end
         opt_trajectory_pieces = [value.(Euv.(xt)) for Euv in Eμ_uvs]
-        opt_trajectory_pieces
-
+        pieces_to_trajectory(opt_trajectory_pieces)
 end
 
 
+"""
+Convert linear pieces to a single trajectory.
+"""
+
+function pieces_to_trajectory(trajectory_pieces)
+     t -> begin
+        num_pieces = size(trajectory_pieces, 1)
+        idx_piece = Int(fld(t * num_pieces, 1))
+        idx_piece = min(idx_piece, num_pieces-1)
+        piece = trajectory_pieces[idx_piece+1]
+        # time shift
+        map(xi -> xi(t*num_pieces-idx_piece), piece)
+    end
+end
 
 # Animation helpers
 
@@ -273,19 +286,11 @@ function show_animation_in_notebook(filename)
 end
 
 
-function make_animation(filename, opt_trajectory_pieces,
-        constraint_fcts, edge_size, a, b, ;
+function make_animation_as_video(filename, opt_trajectory,
+        constraint_fcts, edge_size, a, b;
         num_frames=21, interval_between_frames=100)
 
     @info "Storing animation in $filename ..."
-    opt_trajectory = t -> begin
-        num_pieces = size(opt_trajectory_pieces, 1)
-        idx_piece = Int(fld(t * num_pieces, 1))
-        idx_piece = min(idx_piece, num_pieces-1)
-        piece = opt_trajectory_pieces[idx_piece+1]
-        # time shift
-        map(xi -> xi(t*num_pieces-idx_piece), piece)
-    end
 
     fig = PyPlot.figure(figsize=(5,5))
 
@@ -297,12 +302,28 @@ function make_animation(filename, opt_trajectory_pieces,
         PyPlot.title("t = $t")
     end
 
-    #withfig(fig) do
+    withfig(fig) do
         myanim = anim.FuncAnimation(fig, make_frame,
             frames=num_frames, interval=interval_between_frames)
         myanim.save(filename, bitrate=-1, extra_args=["-vcodec", "libx264", "-pix_fmt", "yuv420p"])
-    #end
+    end
 end
 
+function make_animation_as_plots(opt_trajectory,
+        constraint_fcts, edge_size, a, b;
+        num_frames=21)
+
+    @info "Starting plots ..."
+
+    fig = PyPlot.figure(figsize=(5,5))
+    @showprogress for i=0:num_frames
+        #fig.cla()
+        t = i/num_frames
+        plot_at_time(t, edge_size, a, b, constraint_fcts, opt_trajectory)
+        PyPlot.title("t = $t")
+        fig.clear()
+        fig.show()
+    end
+end
 
 end # module
