@@ -1,37 +1,56 @@
 # PathPlanningSOS.jl
 
+# Installation
+
+Open Julia and type-in the following commands to install the required packages.
+
+```
+using Pkg
+Pkg.add("PathPlanningSOS")
+Pkg.add("JuMP")
+Pkg.add("MosekTools") # can be replaced another solver like CSDP or SCS
+```
+
 
 # Example usage
 
 ```
+using PathPlanningSOS
 using MosekTools
-using SumOfSquares
+using JuMP
 
-## Model
 n = 2 # dimension of the space
-max_deg_uv = 2
-num_pieces = 5
-scale_init = 1
-reg = 0
-num_iterations=100
+max_deg_uv = 2 # degree of moment relaxation
+num_pieces = 5 # number of linear pieces
+num_iterations=20
 weight_lenght= .1
-seed = 3
+random_seed = 3
 a = [-1, -1]
 b = [.1, 0.7]
 edge_size = 1.
 
-solver = with_optimizer(Mosek.Optimizer, QUIET=true)
+solver = optimizer_with_attributes(Mosek.Optimizer, "QUIET" => true)
 
 
 moving_disk = [
-    (t, x) -> dist_squared(x, [1-2*t, 0]) - .5^2  
+    (t, x) -> sum( (x .- [1-2*t, 0]).^2 ) - .5^2
 ]
-                
 
-
-opt_trajectory_pieces = find_path_using_heuristic(n, moving_disk, edge_size, a, b,
+# compute optimal piece-wise linear trajectory
+opt_trajectory = find_path_using_heuristic(n, moving_disk, edge_size, a, b,
     max_deg_uv, num_pieces, solver,
-    reg, weight_lenght,
+    weight_lenght,
     num_iterations,
-    scale_init, seed=seed)
+    seed=random_seed)
+```
+
+
+Show the optimal trajectory.
+
+```
+using Plots
+# plot setup at time `t`
+t = 0.
+PathPlanningSOS.plot_at_time(0., edge_size, a, b,
+                        moving_disk, opt_trajectory)
 ```
