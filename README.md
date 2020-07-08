@@ -4,6 +4,18 @@
 [![Path Planning using SOS](https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/path_planning_animation.gif)](https://youtu.be/8VXckZWe-VQ)
 
 
+The role of this package is to find a trajectory (i.e., a
+continuously-differentiable
+function) 
+<img src="https://render.githubusercontent.com/render/math?math=x: [0, T] \rightarrow  \mathbb R^n" />
+that
+- starts on a point `a` and ends on a point `b`, i.e. 
+- satisfies `m` obstacle constraints given by inequalities
+   <img src="https://render.githubusercontent.com/render/math?math=g_i(t, x(t)) \ge 0 " />
+   <img src="https://render.githubusercontent.com/render/math?math=\forall t \in [0, T]" />
+   <img src="https://render.githubusercontent.com/render/math?math=\forall i \in \{1, \ldots, s\}" />
+
+
 # Installation
 
 Open Julia and type-in the following commands to install the required packages.
@@ -36,7 +48,8 @@ edge_size = 1.
 
 solver = optimizer_with_attributes(Mosek.Optimizer, "QUIET" => true)
 
-
+# Obstacle contraints
+# here there is a single obstacle: a disk of center [1-2*t, 0] and radius .5
 moving_disk = [
     (t, x) -> sum( (x .- [1-2*t, 0]).^2 ) - .5^2
 ]
