@@ -18,7 +18,7 @@ using PyPlot
 using Random
 using SumOfSquares
 using Test
-pyanum = PyPlot.matplotlib.animation
+pyanim = PyPlot.matplotlib.animation
 
 
 
