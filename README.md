@@ -1,5 +1,9 @@
 # PathPlanningSOS.jl
 
+
+[![Path Planning using SOS](https://share.gifyoutube.com/KzB6Gb.gif)](https://youtu.be/8VXckZWe-VQ)
+
+
 # Installation
 
 Open Julia and type-in the following commands to install the required packages.
@@ -43,15 +47,40 @@ opt_trajectory = find_path_using_heuristic(n, moving_disk, edge_size, a, b,
     weight_lenght,
     num_iterations,
     seed=random_seed)
+# opt_trajectory is a function that takes t as input, 
+# and gives the location of the particle at time t.
 ```
+## Optional
 
-
-Show the optimal trajectory.
+Plot the obtained trajectory.
 
 ```
-using Plots
+using PyPlot
+
 # plot setup at time `t`
-t = 0.
-PathPlanningSOS.plot_at_time(0., edge_size, a, b,
+for (i,t)=enumerate(0:.1:1)
+    PyPlot.figure()
+    PathPlanningSOS.plot_at_time(t, edge_size, a, b,
                         moving_disk, opt_trajectory)
+    PyPlot.title("t = $t")
+    fn_index = lpad(i, 3, "0")
+    PyPlot.savefig("path_planning_frame_$(fn_index).png")
+end
 ```
+
+
+Make a video animation (make sure ffmpeg is installed)
+```
+;ffmpeg -r 10 -i path_planning_frame_%03d.png -vcodec libx264 -pix_fmt yuv420p path_planning_animation.mp4 -y
+```
+
+Show video on jupyter notebook
+```
+using Base64
+base64_video = base64encode(open("path_planning_animation.mp4"))
+display("text/html", """<video controls src="data:video/x-m4v;base64,$base64_video">""")
+```
+
+
+
+
