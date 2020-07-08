@@ -2,10 +2,7 @@ module PathPlanningSOS
 
 
 export find_path_using_heuristic
-export show_animation_in_notebook
-export make_animation_as_video
-export make_animation_as_plots
-
+export plot_at_time
 
 using Base64
 using DynamicPolynomials
@@ -18,7 +15,6 @@ using PyPlot
 using Random
 using SumOfSquares
 using Test
-@pyimport matplotlib.animation as pyanim
 
 
 
@@ -262,51 +258,5 @@ function plot_at_time(t, edge_size, a, b, eq_obstacles, opt_trajectory)
     PyPlot.scatter([a[1],b[1]], [a[2], b[2]],  s=100, c="r")
 end
 
-
-function show_animation_in_notebook(filename)
-    base64_video = base64encode(open(filename))
-    display("text/html", """<video controls src="data:video/x-m4v;base64,$base64_video">""")
-end
-
-
-function make_animation_as_video(filename, opt_trajectory,
-        constraint_fcts, edge_size, a, b;
-        num_frames=21, interval_between_frames=100)
-
-    @info "Storing animation in $filename ..."
-
-    fig = PyPlot.figure(figsize=(5,5))
-
-
-    function make_frame(i)
-        fig.clf()
-        t = i/num_frames
-        plot_at_time(t, edge_size, a, b, constraint_fcts, opt_trajectory)
-        PyPlot.title("t = $t")
-    end
-
-    PyPlot.withfig(fig) do
-        myanim = pyanim.FuncAnimation(fig, make_frame,
-            frames=num_frames, interval=interval_between_frames)
-        myanim.save(filename, bitrate=-1, extra_args=["-vcodec", "libx264", "-pix_fmt", "yuv420p"])
-    end
-end
-
-function make_animation_as_plots(opt_trajectory,
-        constraint_fcts, edge_size, a, b;
-        num_frames=21)
-
-    @info "Starting plots ..."
-
-    fig = PyPlot.figure(figsize=(5,5))
-    @showprogress for i=0:num_frames
-        #fig.cla()
-        t = i/num_frames
-        plot_at_time(t, edge_size, a, b, constraint_fcts, opt_trajectory)
-        PyPlot.title("t = $t")
-        fig.clear()
-        fig.show()
-    end
-end
 
 end # module
