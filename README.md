@@ -1,7 +1,9 @@
 # PathPlanningSOS.jl
 
 
-[![Path Planning using SOS](https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/path_planning_animation.gif)](https://youtu.be/8VXckZWe-VQ)
+[![Path Planning using SOS - Example 1](https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/path_planning_animation.gif)](https://youtu.be/8VXckZWe-VQ)
+
+[![Path Planning using SOS Example 2](https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/path_planning_animation_2.gif)](https://youtu.be/6ThKwE0B9yA)
 
 
 The role of this package is to find a trajectory (i.e., a
