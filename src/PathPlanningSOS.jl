@@ -1,14 +1,7 @@
 module PathPlanningSOS
 
 
-# export dist_squared
-# export loc_matrix
-# export measure_in_vars
-# export make_sos_on_0_1
-# export make_psd
 export find_path_using_heuristic
-# export plot_levelset
-# export plot_at_time
 export show_animation_in_notebook
 export make_animation_as_video
 export make_animation_as_plots
@@ -25,7 +18,7 @@ using PyPlot
 using Random
 using SumOfSquares
 using Test
-anim = pyimport("matplotlib.animation")
+@pyimport matplotlib.animation as pyanim
 
 
 
@@ -35,7 +28,7 @@ dist_squared(a, b) = sum((a .- b).^2)
 
 
 """
-Returns the localization matrix (g * mi * mj),
+Returns the localization matrix (g * mi * mj)_ij,
 where mi and mj are monomials in `vars` up to degree `max_deg`.
 """
 
@@ -76,27 +69,27 @@ end
 Make the matrix M(t) sos on [0, 1].
 """
 function make_sos_on_0_1(model, t, M)
+    # polynomial variables inside M
+    var_M = hcat(map(Mij -> Mij.x, M)...)
 
-
-    y = [similarvariable(eltype(M), gensym()) for i in 1:size(M, 1)]
-    p = dot(y, M * y)
-    domain_t = @set t*(1-t) >= 0
-    @constraint(model, p >= 0, domain=domain_t )
-end
-
-"""
-Make the matrix M psd
-"""
-
-function make_psd(model, M)
-    if size(M,1) == 1
-        @constraint model M[1] >= 0
+    # if M does not depent on `t`,
+    # there is no need to invoke the SOS machinery
+    if t in var_M
+        y = [similarvariable(eltype(M), gensym()) for i in 1:size(M, 1)]
+        p = dot(y, M * y)
+        # todo: adapt multipliers to degree of t in M
+        domain_t = @set t*(1-t) >= 0
+        @constraint(model, p >= 0, domain=domain_t )
     else
-        @constraint model M in JuMP.PSDCone()
+        # hack to convert a constant polynomial to a constant
+        M = map(Mij -> Mij.a[1], M)
+        if size(M,1) == 1
+            @constraint model M[1] >= 0
+        else
+            @constraint model M in JuMP.PSDCone()
+        end
     end
 end
-
-
 
 
 function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
@@ -111,7 +104,7 @@ function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
     @polyvar t
     @polyvar x[1:n]
     xt = u .+ t .* v
-
+    measure_vars = [u..., v...]
     contraint_polys = [
         f(t, x) for f in contraint_fcts
     ]
@@ -119,22 +112,18 @@ function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
 
     @info "Definiting the model and the decision vars..."
     model = SOSModel(solver)
-    # γ = ||decision_vars||
-    # α = ||E(v)||
-    @variable model γ
-    @variable model α[1:num_pieces]
+
+    @variable model γ # γ = ||decision_vars||
+    @variable model α[1:num_pieces] # α = ||E(v)||
 
     μ_uvs, Eμ_uvs = zip([
-        measure_in_vars(model, [u..., v...], t, max_deg_uv, "uv_$i")
+        measure_in_vars(model, measure_vars, t, max_deg_uv, "uv_$i")
         for i=1:num_pieces
             ]...)
-
-
 
     decision_vars = cat([μ.a for μ=μ_uvs]..., dims=1)
 
     ## Constraints
-
     @info "Constraints definition..."
 
 
@@ -152,7 +141,6 @@ function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
         contraint_polys...
     ]
 
-
     for (i, E_uv)=enumerate(Eμ_uvs)
 
         for g=loc_polynomials
@@ -160,17 +148,12 @@ function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
                                 [xj => xtj for (xj, xtj)=zip(x, xt)]...)
 
 
-            Mi_g = loc_matrix([u..., v...], t, g_time_corrected, max_deg_uv)
+            Mi_g = loc_matrix(measure_vars, t, g_time_corrected, max_deg_uv)
             M = E_uv.(Mi_g)
-            var_M = hcat(map(Mij -> Mij.x, M)...)
 
-            if t in var_M
-                # make sos on [0, 1]
-                ct = make_sos_on_0_1(model, t, M)
-            else
-                M = map(Mij -> Mij.a[1], M)
-                make_psd(model, M)
-            end
+            # make sos on [0, 1]
+            make_sos_on_0_1(model, t, M)
+
         end
     end
 
@@ -212,7 +195,7 @@ function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
     @showprogress for k=1:num_iterations
         objective = sum([ Eμ(ui^2) - 2*Eμ(ui)*old_ui
                 for (Eμ,old_u)=zip(Eμ_uvs, uv_k[end])
-                for (old_ui,ui)=zip(old_u, [u..., v...] )])
+                for (old_ui,ui)=zip(old_u, measure_vars)])
 
         objective = objective.a[1] + reg * γ + weight_lenght * sum(α)
         @objective model Min objective
@@ -224,7 +207,7 @@ function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
         opt_trajectory = [value.(Euv.(xt)) for Euv in Eμ_uvs]
 
         push!(uv_k,  [ [value(Eμ(ui))
-                        for ui=[u..., v...]] for Eμ=Eμ_uvs])
+                        for ui=measure_vars] for Eμ=Eμ_uvs])
 
         end
         opt_trajectory_pieces = [value.(Euv.(xt)) for Euv in Eμ_uvs]
@@ -260,6 +243,7 @@ function plot_levelset(g)
     zs = g.(xs', ys)
     PyPlot.contour(xs, ys, zs, levels=[0])
 end
+
 
 function plot_at_time(t, edge_size, a, b, eq_obstacles, opt_trajectory)
     PyPlot.xlim(-edge_size*1.1, edge_size*1.1)
@@ -302,8 +286,8 @@ function make_animation_as_video(filename, opt_trajectory,
         PyPlot.title("t = $t")
     end
 
-    withfig(fig) do
-        myanim = anim.FuncAnimation(fig, make_frame,
+    PyPlot.withfig(fig) do
+        myanim = pyanim.FuncAnimation(fig, make_frame,
             frames=num_frames, interval=interval_between_frames)
         myanim.save(filename, bitrate=-1, extra_args=["-vcodec", "libx264", "-pix_fmt", "yuv420p"])
     end
