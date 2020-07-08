@@ -1,5 +1,9 @@
 # PathPlanningSOS.jl
 
+
+[![Path Planning using SOS](https://share.gifyoutube.com/KzB6Gb.gif)](https://youtu.be/8VXckZWe-VQ)
+
+
 # Installation
 
 Open Julia and type-in the following commands to install the required packages.
