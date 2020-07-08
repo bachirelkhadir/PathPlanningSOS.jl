@@ -1,7 +1,7 @@
 # PathPlanningSOS.jl
 
 
-[![Path Planning using SOS](https://share.gifyoutube.com/KzB6Gb.gif)](https://youtu.be/8VXckZWe-VQ)
+[![Path Planning using SOS](https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/path_planning_animation.gif)](https://youtu.be/8VXckZWe-VQ)
 
 
 # Installation
