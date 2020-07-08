@@ -6,7 +6,8 @@ Open Julia and type-in the following commands to install the required packages.
 
 ```
 using Pkg
-Pkg.add("PathPlanningSOS")
+# download this package
+Pkg.add(PackageSpec(url="https://github.com/bachirelkhadir/PathPlanningSOS.jl"))
 Pkg.add("JuMP")
 Pkg.add("MosekTools") # can be replaced another solver like CSDP or SCS
 ```
