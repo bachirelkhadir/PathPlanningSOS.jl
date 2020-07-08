@@ -18,8 +18,7 @@ using PyPlot
 using Random
 using SumOfSquares
 using Test
-pyanim = PyPlot.matplotlib.animation
-
+@pyimport matplotlib.animation as pyanim
 
 
 
