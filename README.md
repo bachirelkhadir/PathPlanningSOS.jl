@@ -4,10 +4,10 @@
 
 The role of this package is to find a trajectory (i.e., a
 continuously-differentiable
-function) 
+function)
 <img src="https://render.githubusercontent.com/render/math?math=x: [0, T] \rightarrow  \mathbb R^n" />
 that
-- starts on a point `a` and ends on a point `b`, i.e. 
+- starts on a point `a` and ends on a point `b`, i.e.
 - satisfies `m` obstacle constraints given by inequalities
    <img src="https://render.githubusercontent.com/render/math?math=g_i(t, x(t)) \ge 0 " />
    <img src="https://render.githubusercontent.com/render/math?math=\forall t \in [0, T]" />
@@ -37,12 +37,12 @@ using JuMP
 n = 2 # dimension of the space
 max_deg_uv = 2 # degree of moment relaxation
 num_pieces = 5 # number of linear pieces
-num_iterations=20
-weight_lenght= .1
-random_seed = 3
-a = [-1, -1]
-b = [.1, 0.7]
-edge_size = 1.
+num_iterations=20 # number of iterations of the heuristic
+weight_lenght= .1 # trade off between minimizing length and rank
+random_seed = 3 # random seed used to initialize the heuristic
+a = [-1, -1] # starting point
+b = [.1, 0.7] # destination
+edge_size = 1. # edgesize of the bounding box where the trajectory lives
 
 solver = optimizer_with_attributes(Mosek.Optimizer, "QUIET" => true)
 
@@ -58,7 +58,7 @@ opt_trajectory = find_path_using_heuristic(n, moving_disk, edge_size, a, b,
     weight_lenght,
     num_iterations,
     seed=random_seed)
-# opt_trajectory is a function that takes t as input, 
+# opt_trajectory is a function that takes t as input,
 # and gives the location of the particle at time t.
 ```
 ## Optional
@@ -91,7 +91,3 @@ using Base64
 base64_video = base64encode(open("path_planning_animation.mp4"))
 display("text/html", """<video controls src="data:video/x-m4v;base64,$base64_video">""")
 ```
-
-
-
-
