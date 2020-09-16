@@ -124,7 +124,7 @@ function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
 
     # total mass is one
     for Eμ=Eμ_uvs
-        @constraint model Eμ(0*t+1) == 1
+        @constraint model Eμ(0*t+1).a[1] == 1
     end
 
 
