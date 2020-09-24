@@ -87,6 +87,15 @@ function make_sos_on_0_1(model, t, M)
 end
 
 
+
+function find_path_using_rigorous_approach(n::Int, contraint_fcts, edge_size::Float64, 
+    a::Array{Float64, 1}, b::Array{Float64, 1},
+    max_deg_uv::Int, max_deg_z::Int, num_pieces::Int, solver,
+    ;scale_init=1, reg=0, seed=0)
+    # Paste here
+end
+
+
 function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
     max_deg_uv, num_pieces, solver,
     weight_lenght,
