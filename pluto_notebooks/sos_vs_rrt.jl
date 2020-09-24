@@ -107,6 +107,7 @@ begin
 	obstacles = [
     	(t, x) -> sum( (x .- obs_pos[i, :] .+ t .* obs_vel[i, :]).^2 ) - radius_obs^2 for i=1:number_obs
 	]
+	@show obstacles
 end
 
 # ╔═╡ dc02ed20-f874-11ea-1b15-15f89bb1afc3
@@ -138,9 +139,6 @@ end
 
 # ╔═╡ fd48399e-f87a-11ea-3e0c-dd911a6373f7
 function sos_length_path(path)
-	if ~ sos_path_successful(path)
-		return ∞
-	end
 	ts = range(0, stop=1, length=100)
 	sum( LinearAlgebra.norm(path(ti) - path(tii)) for (ti,tii)=zip(ts[1:end-1], ts[2:end]))
 end
@@ -311,28 +309,31 @@ end
 # ╔═╡ ced25ee2-f874-11ea-3db4-bfd63ce72a87
 md"# Benchmark"
 
+# ╔═╡ 5473ac7a-f8ae-11ea-1a13-41a2ebd0b84f
+if debug_mode
+		range_num_obs = [10, ]
+		range_radius_obs = [.3]# range(0.1, stop=.3, length=2)
+		range_obs_seed = [1,]
+		range_solver_seed = [1,]
+else
+	range_num_obs = [5, 10, 15, 20, 25]
+	range_radius_obs = [.1, .15, .2, .25, .3]
+	range_obs_seed = 1:5
+	range_solver_seed = 1:5
+end
+
 # ╔═╡ cbaba87a-f876-11ea-0533-756c79f0c51c
 begin
-	if debug_mode
-		range_num_obs = [5, 10,]
-		range_radius_obs = range(0.1, stop=.3, length=2)
-		range_obs_seed = 1:2
-		range_solver_seed = 1:2
-	else
-		range_num_obs = [5, 10, 15, 20]
-		range_radius_obs = range(0.1, stop=.3, length=5)
-		range_obs_seed = 1:5
-		range_solver_seed = 1:5
-	end
+	
 	
 	result_sos = []
 	result_rrt = []
 	for obs_seed=range_obs_seed
 		for solver_seed=range_solver_seed
-			for num_obs=range_num_obs
+			for number_obs=range_num_obs
 				for radius_obs=range_radius_obs
-					current_run = (obs_seed, solver_seed, num_obs, radius_obs)
-					@info current_run
+					current_run = (obs_seed, solver_seed, number_obs, radius_obs)
+					@show current_run
 			# obstacle definitions
 			Random.seed!(obs_seed)
 			obs_pos = 2 .* Random.rand(Float64, (number_obs, 2)) .- 1
@@ -340,8 +341,9 @@ begin
 				(t, x) -> sum( (x .- obs_pos[i, :]).^2 ) - radius_obs^2 for i=1:number_obs
 			]
 			
-			function sos_path_successful(path)
+			function sos_path_successful(path, obstacles)
 				ts = range(0, stop=1, length=100)
+				LinearAlgebra.norm(path(0.) .- [start_x, start_y]) + LinearAlgebra.norm(path(1.) .- [end_x, end_y]) < tol &&
 				all( f(t, path(t)) >= 0 for t=ts for f=obstacles)
 			end
 			
@@ -357,13 +359,14 @@ begin
 			
 			# Solve with sos
 			Random.seed!(solver_seed)
-			opt_trajectory = find_path_using_heuristic(2, obstacles, world_x, 
+			local opt_trajectory = find_path_using_heuristic(2, obstacles, world_x, 
 				[start_x, start_y], [end_x, end_y],
 				deg_relaxation, num_pieces, solver,
 				weight_lenght,
 				num_iterations,
 				seed=solver_seed)
-			push!(result_sos, [current_run..., sos_path_successful(opt_trajectory),
+			push!(result_sos, [current_run..., 
+							sos_path_successful(opt_trajectory, obstacles),
 							sos_length_path(opt_trajectory)])
 			
 			# Solve with RRT
@@ -443,6 +446,18 @@ begin
 	Plots.plot(heat_plots...)
 end
 
+# ╔═╡ 0ceeb71c-f892-11ea-17e1-cf1b167c82a7
+begin
+	groupby_length = combine(groupby(df_rrt_vs_sos, [:obs_seed, :num_obs, :radius_obs]), :length_sos=>minimum, :length_rrt=>minimum)
+	#Plots.scatter(groupby_length[:length_sos_minimum], groupby_length[:length_rrt_minimum], ylims=(2,4), xlims=(2, 4), xlabel="sos", ylabel="rrt", legend=false)
+	#Plots.plot!(0:10, 0:10, ls=:dash, color=:red)
+	Plots.plot(histogram(groupby_length[:length_sos_minimum], bins=2.5:.4:4.5, label="sos"),
+	histogram(groupby_length[:length_rrt_minimum], bins=2.5:.4:4.5, label="rrt"))
+end
+
+# ╔═╡ 2b081b48-f893-11ea-0f47-f90895af0ac9
+groupby_length
+
 # ╔═╡ 081fd8ba-f883-11ea-2dd2-d3d39e7fcf8b
 md"# Save to file"
 
@@ -451,18 +466,21 @@ begin
 	CSV.write("results_sos_vs_rrt-$(Dates.now()).csv", df_rrt_vs_sos)
 end
 
+# ╔═╡ 0a67abf2-f892-11ea-294f-fb4916d40a49
+df_rrt_vs_sos
+
 # ╔═╡ Cell order:
 # ╟─c3d41f9e-f7de-11ea-2a56-b76588d6ef66
-# ╠═79575ad0-f7de-11ea-2e97-97d0955e0194
+# ╟─79575ad0-f7de-11ea-2e97-97d0955e0194
 # ╟─8560dd74-f7de-11ea-3c51-7f36d640d43b
 # ╟─90161a4a-f7de-11ea-186d-972892ea3c26
 # ╟─504017e4-f875-11ea-2928-a1c877aa64b8
-# ╟─96523c9a-f7de-11ea-1dd4-67eaad6f968d
+# ╠═96523c9a-f7de-11ea-1dd4-67eaad6f968d
 # ╟─dc02ed20-f874-11ea-1b15-15f89bb1afc3
 # ╟─e590ec80-f87d-11ea-153d-5d9bed4819a5
 # ╟─8981d24e-f874-11ea-0685-73fd3c241512
-# ╟─50972ccc-f876-11ea-05a5-092c2f6da434
-# ╟─fd48399e-f87a-11ea-3e0c-dd911a6373f7
+# ╠═50972ccc-f876-11ea-05a5-092c2f6da434
+# ╠═fd48399e-f87a-11ea-3e0c-dd911a6373f7
 # ╟─bd7b97e4-f7de-11ea-096f-27a885a176c7
 # ╟─5e97a0fa-f7df-11ea-1750-d7ce2d803e9d
 # ╟─df5b5110-f7de-11ea-3a48-f15db9b1d873
@@ -473,10 +491,14 @@ end
 # ╟─937f9bac-f874-11ea-1d59-77ff8d0aaef0
 # ╟─be90ecb0-f879-11ea-14dd-edff9635e265
 # ╟─ced25ee2-f874-11ea-3db4-bfd63ce72a87
+# ╠═5473ac7a-f8ae-11ea-1a13-41a2ebd0b84f
 # ╠═cbaba87a-f876-11ea-0533-756c79f0c51c
 # ╟─8be8ca2e-f87b-11ea-383c-a75157b2cf35
 # ╠═f44e403c-f877-11ea-033d-11e91ca00d4e
 # ╟─1fa3b8fe-f878-11ea-099d-eb018d18af63
-# ╠═98e7f9a4-f87e-11ea-1d55-f9cee67c2702
-# ╠═081fd8ba-f883-11ea-2dd2-d3d39e7fcf8b
-# ╠═9f54ed10-f881-11ea-0db8-23fa207bd876
+# ╟─98e7f9a4-f87e-11ea-1d55-f9cee67c2702
+# ╠═0ceeb71c-f892-11ea-17e1-cf1b167c82a7
+# ╠═2b081b48-f893-11ea-0f47-f90895af0ac9
+# ╟─081fd8ba-f883-11ea-2dd2-d3d39e7fcf8b
+# ╟─9f54ed10-f881-11ea-0db8-23fa207bd876
+# ╠═0a67abf2-f892-11ea-294f-fb4916d40a49

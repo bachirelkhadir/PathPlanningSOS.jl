@@ -67,6 +67,10 @@ $(@bind number_obs Slider(1:100, show_value=true, default=10))
 Radius of obstacles:
 $(@bind radius_obs Slider(0.00:.01:1, show_value=true, default=.1))
 
+Speed obstacles
+$(@bind speed_obs Slider(0.00:.1:1, show_value=true, default=0.))
+
+
 
 obstacle seed:
 $(@bind obs_seed Slider(1:100, show_value=true, default=0))
@@ -86,7 +90,7 @@ begin
 	obs_pos = 2 .* Random.rand(Float64, (number_obs, 2)) .- 1
 	obs_vel = 2 .* Random.rand(Float64, (number_obs, 2)) .- 1
 	obstacles = [
-    	(t, x) -> sum( (x .- obs_pos[i, :] .+ t .* obs_vel[i, :]).^2 ) - radius_obs^2 for i=1:number_obs
+    	(t, x) -> sum( (x .- obs_pos[i, :] .+ t .* speed_obs .* obs_vel[i, :]).^2 ) - radius_obs^2 for i=1:number_obs
 	]
 	
 	md"Obstacle definitions here"
@@ -98,7 +102,7 @@ begin
 	Random.seed!(solver_seed)
 	opt_trajectory = find_path_using_heuristic(2, obstacles, world_x, 
 		[start_x, start_y], [end_x, end_y],
-	    2, num_pieces, solver,
+	    6, num_pieces, solver,
 	    weight_lenght,
 	    num_iterations,
 	    seed=solver_seed)
@@ -122,7 +126,7 @@ end
 # ╠═79575ad0-f7de-11ea-2e97-97d0955e0194
 # ╟─8560dd74-f7de-11ea-3c51-7f36d640d43b
 # ╠═90161a4a-f7de-11ea-186d-972892ea3c26
-# ╟─96523c9a-f7de-11ea-1dd4-67eaad6f968d
+# ╠═96523c9a-f7de-11ea-1dd4-67eaad6f968d
 # ╠═bd7b97e4-f7de-11ea-096f-27a885a176c7
 # ╟─5e97a0fa-f7df-11ea-1750-d7ce2d803e9d
 # ╟─df5b5110-f7de-11ea-3a48-f15db9b1d873
