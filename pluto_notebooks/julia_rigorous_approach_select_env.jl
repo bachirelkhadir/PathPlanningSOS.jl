@@ -32,20 +32,25 @@ begin
 end
 
 # ╔═╡ c3d41f9e-f7de-11ea-2a56-b76588d6ef66
-md"# Disks moving with constant velocity"
+md"# Rigorous approach for predefined envs"
+
+# ╔═╡ 5e97a0fa-f7df-11ea-1750-d7ce2d803e9d
+md"t $(@bind plot_at_time Slider(0:.01:1, show_value=true, default=0.))"
 
 # ╔═╡ 8560dd74-f7de-11ea-3c51-7f36d640d43b
 md"""
 # Data of the problem
 
+
+
 world size:
 
-$(@bind world_x Slider(0.00:.01:1, show_value=true, default=1.)) $(@bind world_y Slider(0.00:.01:1, show_value=true, default=1.))
+$(@bind world_x Slider(0.00:.01:1.01, show_value=true, default=1.01)) $(@bind world_y Slider(0.00:.01:1.01, show_value=true, default=1.01))
 
 
 start: 
 
-$(@bind start_x Slider(-1:.01:1, show_value=true, default=-.99)) $(@bind start_y Slider(-1:.01:1, show_value=true, default=-.98))
+$(@bind start_x Slider(-1:.01:1, show_value=true, default=-.99)) $(@bind start_y Slider(-1:.01:1.01, show_value=true, default=-.98))
 
 goal:
 
@@ -65,18 +70,9 @@ $(@bind deg_relaxation_z Slider(1:20, show_value=true, default=2))
 
 
 
-Regularization:
-$(@bind reg Slider(0.00:.01:1., show_value=true, default=.0))
+Log reg :
+$(@bind log_reg Slider(-15:2, show_value=true, default=-10))
 
-Number obstacles:
-$(@bind number_obs Slider(1:10, show_value=true, default=2))
-
-
-Radius of obstacles:
-$(@bind radius_obs Slider(0.00:.01:1, show_value=true, default=.3))
-
-Speed obstacles
-$(@bind speed_obs Slider(0.00:.1:1, show_value=true, default=0.))
 
 
 obstacle seed:
@@ -89,142 +85,44 @@ $(@bind multiply_multipliers CheckBox(default=false))
 
 """
 
+# ╔═╡ 3b770240-032a-11eb-163a-6d1eee1a4d77
+sqrt((start_x - end_x)^2 + (start_y - end_y)^2)
+
+# ╔═╡ 93405720-02b1-11eb-3e03-515a4a1b600f
+obstacle_env = Dict(
+	"One static disk" => ( hcat([0., 0.])', 
+						   hcat([0., 0.])', 
+							.6 ),
+	"Two static disks" => (hcat([-.3, -.3], [.5, .2])', 
+		hcat([0., 0.], [0., 0.])', .4 ),
+	
+	"Two moving disks" => (hcat([-.3, -.3], [.5, .2])', 
+		-hcat([0.5, 0.2], [-0.2, 0.4])', .4 ),
+	"One moving disk" => ( hcat([0., 0.5])', 
+						   hcat([0., 0.5])', 
+							.6 ),
+
+)
+
+# ╔═╡ 816fb036-02b6-11eb-137a-7963c1fbccdc
+md"$(@bind obstacle_env_idx Select([keys(obstacle_env)...]))"
+
 # ╔═╡ 90161a4a-f7de-11ea-186d-972892ea3c26
 solver = optimizer_with_attributes(Mosek.Optimizer, "QUIET" => false)
 
 # ╔═╡ 96523c9a-f7de-11ea-1dd4-67eaad6f968d
 begin
 	Random.seed!(obs_seed)
-	obs_pos = 2 .* Random.rand(Float64, (number_obs, 2)) .- 1
-	obs_vel = 2 .* Random.rand(Float64, (number_obs, 2)) .- 1
+	obs_pos = obstacle_env[obstacle_env_idx][1]
+	obs_vel = obstacle_env[obstacle_env_idx][2]
+	obs_radius = obstacle_env[obstacle_env_idx][3]
 	obstacles = [
-    	(t, x) -> sum( (x .- obs_pos[i, :] .+ t .* speed_obs .* obs_vel[i, :]).^2 ) - radius_obs^2 for i=1:number_obs
+    	(t, x) -> sum( (x .- obs_pos[i, :] .+ t .* obs_vel[i, :]).^2 ) - obs_radius^2 for i=1:size(obs_pos, 1)
 	]
 	
 	md"Obstacle definitions here"
+	obs_pos[1,:]
 end
-
-# ╔═╡ 2fe5cba8-fe86-11ea-083d-5d29545d976b
-function find_path_using_rigorous_approach(n::Int, contraint_fcts, edge_size::Float64, 
-    a::Array{Float64, 1}, b::Array{Float64, 1},
-    max_deg_uv::Int, max_deg_z::Int, num_pieces::Int, solver,
-    ;scale_init=1, reg=0, )
-    @polyvar u[1:num_pieces,1:n]
-    @polyvar v[1:num_pieces,1:n]
-    @polyvar t
-    @polyvar z[1:num_pieces]
-    @polyvar x[1:n]
-
-    @info "Definiting the model and the decision vars..."
-    model = SOSModel(solver)
-	@variable model γ
-	
-    contraint_polys = [
-        f(t, x) for f in contraint_fcts
-    ]
-
-	
-    @info "Declaration measures"
-    μ, Eμ = PathPlanningSOS.measure_in_vars(model, [u..., v..., z...], t, max_deg_uv, "μ")
-    μz, Eμz = PathPlanningSOS.measure_in_vars(model, z, t, max_deg_z, "μz")
-    decision_vars = [μ.a..., μz.a...]
-
-
-    @info "Constraints definition"
-    # total mass is one
-    @constraint model Eμ(0*t+1).a[1] == 1
-    @constraint model Eμz(0*t+1).a[1] == 1
-
-    # obstacle constraints
-    # localization of (u,v)
-    loc_polynomials = [
-	0*u[1] + 1,
-	z...,
-	#(sqrt(2)*edge_size .- z)...,
-	[subs(g, [xj => xtj for (xj, xtj)=zip(x, u[i,:] .+ t .* v[i, :])]...)
-			for i=1:num_pieces for g=contraint_polys]...
-    ]
-
-    # loc_polynomials = [
-    # 	f*g for f=loc_polynomials for g=loc_polynomials
-    # ]
-
-    for g=loc_polynomials
-	Mi_g = PathPlanningSOS.loc_matrix([u..., v..., z...], t, g, max_deg_uv)
-	M = Eμ.(Mi_g)
-	var_M = hcat(map(Mij -> Mij.x, M)...)
-        PathPlanningSOS.make_sos_on_0_1(model, t, M)
-    end
-
-    # continuity constraints
-    # x(t=1+) = x(t=0-)
-    mons = monomials([u..., v..., z...], 0:max_deg_uv-1)
-    for i=1:(num_pieces-1)
-	end_piece_i = u[i,:] .+ v[i, :]
-	start_piece_iplus = u[i+1,:]
-	for m=mons
- 	    @constraint(model, Eμ.(m .* (end_piece_i .- start_piece_iplus)) .== 0)
-	end
-    end
-    # x(0) ~ a, x(1) ~ b
-    for m=mons
-	@constraint model Eμ.(m .* (u[1,:] .- a) ) .== 0
-	@constraint model Eμ.(m .* (u[end,:]+v[end,:] .- b)) .== 0
-    end
-
-
-    # z^2 = u^2+v^2
-    mons = monomials([u..., v..., z...], 0:max_deg_uv-2)
-    for i=1:num_pieces
-	@constraint model Eμ.(mons .* (z[i]^2-sum(v[i,:].^2))) .== 0
-    end
-
-
-    ## Constraint for μz
-
-
-    # psd
-    # Mz = loc_matrix(z, 0*z[1]+1, max_deg_z)
-    # Mz = Eμz.(Mz)
-    # Mz = map(Mij -> Mij.a[1], Mz)
-    # @constraint model Mz in PSDCone()
-    #
-
-    for g=[0*z[1]+1, z..., (sqrt(2)*edge_size .- z)...]
-	Mi_g = PathPlanningSOS.loc_matrix(z, t, g, max_deg_z)
-	M = Eμz.(Mi_g)
-	M = map(Mij -> Mij.a[1], M)
-	if size(M,1) == 1
-		@constraint model M[1] >= 0
-	else
-		@constraint model M in JuMP.PSDCone()
-	end
-	#PathPlanningSOS.make_psd(model, t, M)
-    end
-
-
-    # marginals of z agree
-    mons_z = monomials(z, 0:max_deg_uv)
-    @constraint model Eμ.(mons_z) .== Eμz.(mons_z)
-
-
-    ## Objective
-    @info "Set Objective"
-    objective = sum(Eμ(zi) for zi=z)
-    @constraint model [γ; decision_vars] in SecondOrderCone()
-    objective = objective.a[1] + reg * γ
-    @objective model Min objective
-
-    #@objective model Min sum(Eμ(wi^4) for wi=[u..., v..., z...]).a[1]
-    ##
-    @info "Optimize"
-    optimize!(model)
-    @info termination_status(model), objective_value(model)
-
-    opt_trajectory_pieces = [value.(Eμ.(u[i, :] + t .* v[i, :])) for i=1:num_pieces]
-    PathPlanningSOS.pieces_to_trajectory(opt_trajectory_pieces)
-end
-
 
 # ╔═╡ ab6bed40-fe8e-11ea-1787-8bfcbdf208c7
 function find_path_using_rigorous_approach_cheap(n::Int, contraint_fcts, edge_size::Float64, 
@@ -321,6 +219,8 @@ function find_path_using_rigorous_approach_cheap(n::Int, contraint_fcts, edge_si
     mons_z = monomials(z, 0:max_deg_uv)
     @constraint model Eμ.(mons_z) .== Eμz.(mons_z)
 
+	# sum E(zi) >= norm(a - b)
+	@constraint model sum(Eμz(zi) for zi=z) >= LinearAlgebra.norm(a .- b)
 
     ## Objective
     @info "Set Objective"
@@ -350,6 +250,7 @@ end
 begin
 	# compute optimal piece-wise linear trajectory
 	n = 2
+	reg = 10.0^log_reg
 	opt_value, opt_trajectory_length, opt_trajectory = find_path_using_rigorous_approach_cheap(
 		n, # n
 		obstacles, # contraint_fcts
@@ -365,9 +266,6 @@ begin
 	md"Computing Optimal path..."
 end
 
-# ╔═╡ 5e97a0fa-f7df-11ea-1750-d7ce2d803e9d
-md"t $(@bind plot_at_time Slider(0:.01:1, show_value=true, default=0.))"
-
 # ╔═╡ df5b5110-f7de-11ea-3a48-f15db9b1d873
 begin
 	q = PyPlot.figure()
@@ -377,19 +275,30 @@ begin
 				"($deg_relaxation_z en z), " *
 				"mult-multipliers? $multiply_multipliers\n" *
 				 "obj_value = $(round(opt_value, digits=2)), " *
-				 "length = $(round(opt_trajectory_length, digits=2))")
+				 "length = $(round(opt_trajectory_length, digits=2)), " *
+	"reg = $reg")
 	PyPlot.axes().set_aspect("equal")
 	q
 end
 
+# ╔═╡ d6b5beea-02b2-11eb-23bb-d992de09a8b0
+opt_value
+
+# ╔═╡ df86eee0-02b2-11eb-1deb-6f9de8d2c31b
+opt_trajectory_length
+
 # ╔═╡ Cell order:
 # ╟─c3d41f9e-f7de-11ea-2a56-b76588d6ef66
 # ╟─79575ad0-f7de-11ea-2e97-97d0955e0194
-# ╟─df5b5110-f7de-11ea-3a48-f15db9b1d873
-# ╠═8560dd74-f7de-11ea-3c51-7f36d640d43b
-# ╟─90161a4a-f7de-11ea-186d-972892ea3c26
-# ╟─96523c9a-f7de-11ea-1dd4-67eaad6f968d
-# ╟─2fe5cba8-fe86-11ea-083d-5d29545d976b
-# ╟─ab6bed40-fe8e-11ea-1787-8bfcbdf208c7
-# ╠═bd7b97e4-f7de-11ea-096f-27a885a176c7
+# ╟─816fb036-02b6-11eb-137a-7963c1fbccdc
 # ╟─5e97a0fa-f7df-11ea-1750-d7ce2d803e9d
+# ╟─df5b5110-f7de-11ea-3a48-f15db9b1d873
+# ╠═d6b5beea-02b2-11eb-23bb-d992de09a8b0
+# ╠═df86eee0-02b2-11eb-1deb-6f9de8d2c31b
+# ╟─8560dd74-f7de-11ea-3c51-7f36d640d43b
+# ╠═3b770240-032a-11eb-163a-6d1eee1a4d77
+# ╠═93405720-02b1-11eb-3e03-515a4a1b600f
+# ╟─90161a4a-f7de-11ea-186d-972892ea3c26
+# ╠═96523c9a-f7de-11ea-1dd4-67eaad6f968d
+# ╠═ab6bed40-fe8e-11ea-1787-8bfcbdf208c7
+# ╠═bd7b97e4-f7de-11ea-096f-27a885a176c7
