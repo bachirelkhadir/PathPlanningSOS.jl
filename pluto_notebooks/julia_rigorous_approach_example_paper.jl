@@ -28,6 +28,7 @@ begin
 	using PyPlot
 	using LinearAlgebra
 	using SumOfSquares
+	using CSDP
 	md"""A bunch of imports"""
 end
 
@@ -50,16 +51,16 @@ world_x = 1.01
 world_y = .995
 
 # ╔═╡ 22ff0c08-02e4-11eb-08c6-ed077ca60192
-start_x = 0.01
+start_x = -.99
 
 # ╔═╡ 2b7f2fac-02e4-11eb-37cc-ebe8e56d810a
 start_y = -.99
 
 # ╔═╡ 2fa15284-02e4-11eb-0fe3-8179a9a62349
-end_x = 0.01
+end_x = 0.012
 
 # ╔═╡ 350361b8-02e4-11eb-0987-7965d90c3a30
-end_y = .99
+end_y = .995
 
 # ╔═╡ 3d5f7dbc-02e4-11eb-13af-8b7568f1f5af
 num_pieces = 2
@@ -68,16 +69,16 @@ num_pieces = 2
 deg_relaxation_z = 10
 
 # ╔═╡ 48d192ac-02e4-11eb-1f67-7b4f48aabc8a
-log_reg = -15
+log_reg = -8
 
 # ╔═╡ 5339dc74-02e4-11eb-3e35-55a5370cedc8
-obs_pos =  hcat([0., 0.5])'
+obs_pos =  hcat([0., 0.25])'
 
 # ╔═╡ 5e220858-02e4-11eb-1f4d-5b4f8e5b6ce5
-obs_vel = hcat([0., 0.5])'
+obs_vel = hcat([0., .1])'
 
 # ╔═╡ 66bd4bee-02e4-11eb-2852-ed82b19d422e
-obs_radius = 6. /10.
+obs_radius = 5. /10.
 
 # ╔═╡ 90161a4a-f7de-11ea-186d-972892ea3c26
 solver = optimizer_with_attributes(Mosek.Optimizer, "QUIET" => true)
@@ -201,6 +202,10 @@ function find_path_using_rigorous_approach_cheap(n::Int, contraint_fcts, edge_si
 		 						for i=1:num_pieces])
 	
 	@info "∑ E(z) = ", sum(value.(Eμ.(z)))
+	@info "∑ ||E(v)|| = ",sum([LinearAlgebra.norm(value.(Eμ.(v[i, :]))) 
+		 						for i=1:num_pieces])	
+	@info "∑ √E(||v||^2) = ",sum([sqrt(value(Eμ.(sum(v[i, :].^2))).a[1]) 
+		 						for i=1:num_pieces])	
 	@info "∑ √E(z²) = ", sum(sqrt(value(Eμ(zi^2)).a[1]) for zi=z) 						
     return (objective_value(model),
 			opt_trajectory_length,
@@ -285,23 +290,23 @@ end
 # ╟─c3d41f9e-f7de-11ea-2a56-b76588d6ef66
 # ╠═79575ad0-f7de-11ea-2e97-97d0955e0194
 # ╠═5e97a0fa-f7df-11ea-1750-d7ce2d803e9d
-# ╠═df5b5110-f7de-11ea-3a48-f15db9b1d873
+# ╟─df5b5110-f7de-11ea-3a48-f15db9b1d873
 # ╠═d6b5beea-02b2-11eb-23bb-d992de09a8b0
 # ╠═df86eee0-02b2-11eb-1deb-6f9de8d2c31b
 # ╟─98b2087e-02e4-11eb-31a3-1b9d90631910
 # ╟─a511d81a-02e4-11eb-3419-4dfcb7b347a6
-# ╟─19278f2a-02e4-11eb-22fd-95719ebe4178
+# ╠═19278f2a-02e4-11eb-22fd-95719ebe4178
 # ╟─1b57adca-02e4-11eb-0821-d1159ff990dd
-# ╟─22ff0c08-02e4-11eb-08c6-ed077ca60192
-# ╟─2b7f2fac-02e4-11eb-37cc-ebe8e56d810a
-# ╟─2fa15284-02e4-11eb-0fe3-8179a9a62349
-# ╟─350361b8-02e4-11eb-0987-7965d90c3a30
-# ╟─3d5f7dbc-02e4-11eb-13af-8b7568f1f5af
-# ╟─448d1108-02e4-11eb-1390-c13a8f52358e
+# ╠═22ff0c08-02e4-11eb-08c6-ed077ca60192
+# ╠═2b7f2fac-02e4-11eb-37cc-ebe8e56d810a
+# ╠═2fa15284-02e4-11eb-0fe3-8179a9a62349
+# ╠═350361b8-02e4-11eb-0987-7965d90c3a30
+# ╠═3d5f7dbc-02e4-11eb-13af-8b7568f1f5af
+# ╠═448d1108-02e4-11eb-1390-c13a8f52358e
 # ╠═48d192ac-02e4-11eb-1f67-7b4f48aabc8a
-# ╟─5339dc74-02e4-11eb-3e35-55a5370cedc8
-# ╟─5e220858-02e4-11eb-1f4d-5b4f8e5b6ce5
-# ╟─66bd4bee-02e4-11eb-2852-ed82b19d422e
+# ╠═5339dc74-02e4-11eb-3e35-55a5370cedc8
+# ╠═5e220858-02e4-11eb-1f4d-5b4f8e5b6ce5
+# ╠═66bd4bee-02e4-11eb-2852-ed82b19d422e
 # ╠═90161a4a-f7de-11ea-186d-972892ea3c26
 # ╟─708e3df4-02e4-11eb-3754-8750484484a5
 # ╟─ab6bed40-fe8e-11ea-1787-8bfcbdf208c7

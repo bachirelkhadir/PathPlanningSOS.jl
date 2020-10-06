@@ -136,7 +136,9 @@ function generate_obstacle_setup(obstacle_setup)
 # 		all( f(t, path(t)) >= 0 for t=ts for f=obstacles)
 # 	end
 
-	check_collision_tv(q, t)= all( obs(t, q) >= 0 for obs ∈ obstacles)
+	check_collision_tv(q, t)= all( obs(t, q) >= 0 for obs ∈ obstacles) &&
+							  all( abs.(q) .<= edge_size)
+	
 
 	# check if the segment (q1, q2) intersects with the obstacles
 	check_collision_segment_tv = (q1, q2) -> begin
@@ -485,9 +487,9 @@ if debug_mode
 		range_speed_obs = [1.]
 		range_solver_seed = [1,]
 else
-	range_n = 2:10
+	range_n = 2:4
 	range_obs_seed = 1:10
-	range_speed_obs = [0., .5]
+	range_speed_obs = [0., 1.]
 	range_solver_seed = [1,]
 end
 
@@ -632,7 +634,8 @@ for obs_seed=range_obs_seed
 for speed_obs=range_speed_obs
 for n=range_n
 	current_run = (obs_seed, solver_seed, n, speed_obs)
-	@show current_run
+	@show (obs_seed, solver_seed, n, speed_obs)
+	#@show current_run
 	
 	obstacle_setup = Dict(:n => n, 
 					:a => [-.99 for _ in 1:n],
@@ -734,15 +737,15 @@ end
 # ╟─3408f502-05ed-11eb-1316-cdd8235769bf
 # ╟─d24f3e22-0603-11eb-360d-b789b9e18a3a
 # ╟─43e4f67a-05e4-11eb-29d3-83cd2faaee75
-# ╠═6bce6542-05e5-11eb-1322-81821b08c030
-# ╠═ebc7c88c-05e6-11eb-13cd-455b20227590
+# ╟─6bce6542-05e5-11eb-1322-81821b08c030
+# ╟─ebc7c88c-05e6-11eb-13cd-455b20227590
 # ╟─fce9d6a4-0603-11eb-10c7-27fc653d8c99
 # ╟─ced25ee2-f874-11ea-3db4-bfd63ce72a87
 # ╠═5473ac7a-f8ae-11ea-1a13-41a2ebd0b84f
 # ╠═cbaba87a-f876-11ea-0533-756c79f0c51c
 # ╠═24ecf380-05f3-11eb-2a71-5d9796f7145d
 # ╠═1162451a-066c-11eb-160f-e30773c4f65f
-# ╟─8be8ca2e-f87b-11ea-383c-a75157b2cf35
+# ╠═8be8ca2e-f87b-11ea-383c-a75157b2cf35
 # ╠═69813a14-0615-11eb-2398-31b3f1b9c905
 # ╟─081fd8ba-f883-11ea-2dd2-d3d39e7fcf8b
 # ╠═9f54ed10-f881-11ea-0db8-23fa207bd876

@@ -238,13 +238,13 @@ a = 10
 
 # ╔═╡ Cell order:
 # ╟─d99f8926-febb-11ea-274a-8d6683e33f7a
-# ╟─ad7e4182-f312-11ea-08ab-659aec318939
-# ╟─339b48de-f30c-11ea-2de1-ebe2ba2fe62c
-# ╟─fdea50d0-f30c-11ea-1a0e-a3692e19f287
-# ╟─d6b26792-f399-11ea-1d61-8ba4a7dd1d7d
+# ╠═ad7e4182-f312-11ea-08ab-659aec318939
+# ╠═339b48de-f30c-11ea-2de1-ebe2ba2fe62c
+# ╠═fdea50d0-f30c-11ea-1a0e-a3692e19f287
+# ╠═d6b26792-f399-11ea-1d61-8ba4a7dd1d7d
 # ╟─63429c02-f309-11ea-3830-21f2dff71fcf
 # ╟─13137234-f30d-11ea-3fb0-c7fb03f32356
 # ╟─f8672662-f30f-11ea-2380-8ba1806c0a84
 # ╟─778dbe88-febe-11ea-11d6-ad7a3cadb5fe
-# ╟─10ad4972-f310-11ea-248d-79a4fdcadc5a
+# ╠═10ad4972-f310-11ea-248d-79a4fdcadc5a
 # ╟─938d283c-f8ef-11ea-2e20-49f7ed6431c5
