@@ -1,5 +1,10 @@
 # PathPlanningSOS.jl
 
+
+This package contains the code that was used in the numerical experiments of the paper PLACEHOLDER.
+
+Abstract: <Placeholder>
+
 <a href="https://youtu.be/8VXckZWe-VQ"><img alt="Path Planning using SOS - Example 1" src="https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/path_planning_animation.gif" height=250px/></a> <a href="https://youtu.be/6ThKwE0B9yA"><img alt="Path Planning using SOS - Example 2" src="https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/path_planning_animation_2.gif" height=250px/></a>
 
 The role of this package is to find a trajectory (i.e., a
