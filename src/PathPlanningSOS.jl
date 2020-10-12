@@ -154,7 +154,8 @@ function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
 
             Mi_g = loc_matrix(measure_vars, t, g_time_corrected, max_deg_uv)
             M = E_uv.(Mi_g)
-
+            # @show g
+            # @show M
             # make sos on [0, 1]
             make_sos_on_0_1(model, t, M)
 
@@ -197,7 +198,11 @@ function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
 
     @info "Starting iterative heuristic..."
     @showprogress for k=1:num_iterations
-        objective = sum([ Eμ(ui^2) - 2*Eμ(ui)*old_ui
+        # objective = sum([ Eμ(ui^2) - 2*Eμ(ui)*old_ui
+        #         for (Eμ,old_u)=zip(Eμ_uvs, uv_k[end])
+        #         for (old_ui,ui)=zip(old_u, measure_vars)])
+        d = max_deg_uv
+        objective = sum([ Eμ(ui^d) - d*Eμ(ui)*old_ui^(d-1)
                 for (Eμ,old_u)=zip(Eμ_uvs, uv_k[end])
                 for (old_ui,ui)=zip(old_u, measure_vars)])
 
@@ -205,7 +210,8 @@ function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
         @objective model Min objective
 
         optimize!(model)
-        termination_status(model), objective_value(model)
+        # @info termination_status(model), objective_value(model), value(objective)
+        # @info value.(α)
         st = termination_status(model)
         st_opt = objective_value(model)
         opt_trajectory = [value.(Euv.(xt)) for Euv in Eμ_uvs]
@@ -213,7 +219,17 @@ function find_path_using_heuristic(n, contraint_fcts, edge_size, a, b,
         push!(uv_k,  [ [value(Eμ(ui))
                         for ui=measure_vars] for Eμ=Eμ_uvs])
 
-        end
+    end
+
+    rank_one_dist = sum([value(Eμ(ui^2)) - value(Eμ(ui))^2
+                for (Eμ,old_u)=zip(Eμ_uvs, uv_k[end])
+                for (old_ui,ui)=zip(old_u, measure_vars)])
+    @show rank_one_dist
+
+    rank_one_dist1 = sum([value(Eμ(ui^max_deg_uv)) - value(Eμ(ui))^max_deg_uv
+                for (Eμ,old_u)=zip(Eμ_uvs, uv_k[end])
+                for (old_ui,ui)=zip(old_u, measure_vars)])
+    @show rank_one_dist1
         opt_trajectory_pieces = [value.(Euv.(xt)) for Euv in Eμ_uvs]
         pieces_to_trajectory(opt_trajectory_pieces)
 end

@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.2
+# v0.11.14
 
 using Markdown
 using InteractiveUtils
@@ -21,7 +21,6 @@ begin
 	using Revise
 	using CSV
 	using Dates
-	using Statistics
 
 	using DataFrames
 	using DataFramesMeta
@@ -37,8 +36,12 @@ begin
 	using KNITRO 
 	using ProgressMeter
 	using DynamicPolynomials
-	md"""A bunch of imports"""
+	md"""A bunch of imports""" 
 end
+
+# ╔═╡ a0d8569c-0682-11eb-32aa-9ba33e890691
+using DelimitedFiles
+
 
 # ╔═╡ c3d41f9e-f7de-11ea-2a56-b76588d6ef66
 md"# Disks moving with constant velocity"
@@ -47,7 +50,7 @@ md"# Disks moving with constant velocity"
 md"Debug mode? $(@bind debug_mode CheckBox(default=true))"
 
 # ╔═╡ a39d4a4a-05e7-11eb-2f92-e118170808f8
-n = 2
+n = 3
 
 # ╔═╡ abd44b0a-05e7-11eb-07ed-c7c73096570e
 edge_size = 1.01
@@ -83,10 +86,14 @@ radius_obs = .2
 md"Static obstacles? $(@bind static_mode CheckBox(default=true))"
 
 # ╔═╡ 1d3b7e12-05e8-11eb-3f76-3b7dc80b948f
-speed_obs = static_mode ? 0.  : 1.
+if static_mode
+	speed_obs = 0.
+else 
+	speed_obs = 1.
+end
 
 # ╔═╡ e856be64-05e7-11eb-2260-77c2b187e2ed
-obs_seed = 4
+obs_seed = 100
 
 # ╔═╡ ec1ce6ea-05e7-11eb-3816-11b297344745
 solver_seed = 1
@@ -110,7 +117,6 @@ obstacle_setup = Dict(:n => n,
 	:b => b)
 
 # ╔═╡ 2011598c-05ec-11eb-1890-850db5315bd5
-
 function generate_obstacle_setup(obstacle_setup)
 	# reading necessary config variables
 	obs_seed = obstacle_setup[:obs_seed]
@@ -181,6 +187,15 @@ function plot_obstacles(obstacle_setup, opt_trajectory=(t->a))
 	q
 end
 
+# ╔═╡ 75388fd6-0680-11eb-032e-859e0a5b77f4
+generated_obstacles = generate_obstacle_setup(obstacle_setup)
+
+# ╔═╡ a868fe90-0680-11eb-25f0-fb0c836b231f
+generated_obstacles[:obs_pos]
+
+# ╔═╡ abc33092-0680-11eb-373d-294e074f4df9
+generated_obstacles[:obs_vel]
+
 # ╔═╡ c6c0c038-0600-11eb-1c80-b51afcbbab50
 md"# Path helpers"
 
@@ -190,8 +205,60 @@ function length_path(path)
         sum( LinearAlgebra.norm(path(ti) - path(tii)) for (ti,tii)=zip(ts[1:end-1], ts[2:end]))
 end
 
+# ╔═╡ 3909a674-0682-11eb-163d-036dd6fac684
+function mean(x)
+	sum(x) ./ size(x,1)
+end
+
+# ╔═╡ d358181e-0600-11eb-1ad9-4316519b7784
+function is_path_valid(path, obstacle_setup; tol=1e-2, 
+					num_discretization_points=1000,
+					max_jump=.1)
+	obstacles = generate_obstacle_setup(obstacle_setup)[:obstacles]
+	a = obstacle_setup[:a]
+	b = obstacle_setup[:b]
+	ts = range(0, stop=1, length=num_discretization_points)
+	norm =  LinearAlgebra.norm
+	start_and_dest_const = norm(path(0.) .- a) + norm(path(1.) .- b) < tol
+	collision_avoidance_const = all( f(t, path(t)) >= 0 for t=ts for f=obstacles)
+	continuity_const = all( mean(abs.(path(ti) .- path(tii))) <= max_jump for (ti, tii)=zip(ts[1:end-1], ts[2:end]) )
+	
+	start_and_dest_const && collision_avoidance_const# && continuity_const
+end
+
+
 # ╔═╡ 8981d24e-f874-11ea-0685-73fd3c241512
 md" # SOS"
+
+# ╔═╡ bd7b97e4-f7de-11ea-096f-27a885a176c7
+begin
+	function run_sos(obstacle_setup)
+		generated_obs = generate_obstacle_setup(obstacle_setup)
+		# compute optimal piece-wise linear trajectory
+		Random.seed!(solver_seed)
+		opt_trajectory_sos = find_path_using_heuristic(obstacle_setup[:n], 
+			generated_obs[:obstacles], 
+			edge_size, 
+			obstacle_setup[:a], obstacle_setup[:b],
+			deg_relaxation, num_pieces, solver,
+			weight_lenght,
+			num_sos_iterations,
+			seed=solver_seed)
+		opt_trajectory_sos
+	end
+	opt_trajectory_sos = run_sos(obstacle_setup)
+	is_path_valid(opt_trajectory_sos, obstacle_setup)
+end
+
+# ╔═╡ b3b554bc-05e8-11eb-30ee-13748ef82f3b
+if n == 2
+	q_sos = plot_obstacles(obstacle_setup, opt_trajectory_sos)
+	PyPlot.plot(eachcol(hcat(opt_trajectory_sos.(0:.01:1)...)')...)
+	q_sos
+end
+
+# ╔═╡ 3eda12e4-0616-11eb-3791-03110d0f8432
+LinearAlgebra.norm(opt_trajectory_sos(0.) .- opt_trajectory_sos(0.01))
 
 # ╔═╡ 725babbe-f874-11ea-2552-9d3968d8b8d9
 md"# RRT"
@@ -272,6 +339,31 @@ function rrt_nodes_to_path(node_positions, graph_edges, t)
 	
 end
 
+
+# ╔═╡ 937f9bac-f874-11ea-1d59-77ff8d0aaef0
+begin
+	function run_rrt(obstacle_setup)
+	generated_obs = generate_obstacle_setup(obstacle_setup)
+
+		
+	Random.seed!(solver_seed)
+	path_found, node_positions, graph_edges = rrt_find_path(obstacle_setup[:n],
+			obstacle_setup[:a], obstacle_setup[:b],
+		generated_obs[:check_collision], generated_obs[:check_collision_segment];
+		num_iterations=num_rrt_iterations, step_size=step_size,
+		radius_goal= .3)
+	opt_trajectory_rrt = t-> rrt_nodes_to_path(node_positions, graph_edges, t)
+	end
+	opt_trajectory_rrt = run_rrt(obstacle_setup)
+	is_path_valid(opt_trajectory_rrt, obstacle_setup)
+end
+
+# ╔═╡ 8bf7a05a-0602-11eb-0940-1b290811b69d
+if n == 2
+	q_rrt = plot_obstacles(obstacle_setup, opt_trajectory_rrt)
+	PyPlot.plot(eachcol(hcat(opt_trajectory_rrt.(0:.01:1)...)')...)
+	q_rrt
+end
 
 # ╔═╡ 28bd2dd0-05ed-11eb-3389-4dc1b4c7bfe1
 md"# RRT TV"
@@ -418,10 +510,36 @@ function rrt_nodes_to_path_tv(node_positions, graph_edges, t)
 end
 
 
+# ╔═╡ 3408f502-05ed-11eb-1316-cdd8235769bf
+begin
+	function run_rrt_tv(obstacle_setup)
+	generated_obs = generate_obstacle_setup(obstacle_setup)
+
+		
+	Random.seed!(solver_seed)
+	path_found, node_positions, graph_edges = rrt_find_path_tv(obstacle_setup[:n],
+			obstacle_setup[:a], obstacle_setup[:b],
+		generated_obs[:check_collision_tv], generated_obs[:check_collision_segment_tv];
+		num_iterations=num_rrt_iterations, step_size=step_size,
+		radius_goal= .3)
+		opt_trajectory_rrt_tv = t-> rrt_nodes_to_path_tv(node_positions, graph_edges, t)[1:end-1]
+		opt_trajectory_rrt_tv
+	end
+	opt_trajectory_rrt_tv = run_rrt_tv(obstacle_setup)
+	is_path_valid(opt_trajectory_rrt_tv, obstacle_setup)
+end
+
+# ╔═╡ d24f3e22-0603-11eb-360d-b789b9e18a3a
+if n == 2
+	q_rrt_tv = plot_obstacles(obstacle_setup, opt_trajectory_rrt_tv)
+	PyPlot.plot(eachcol(hcat(opt_trajectory_rrt_tv.(0:.01:1)...)')...)
+	q_rrt_tv
+end
+
 # ╔═╡ 43e4f67a-05e4-11eb-29d3-83cd2faaee75
 md"# NLP"
 
-# ╔═╡ 6bce6542-05e5-11eb-1322-81821b08c030
+# ╔═╡ 7162a346-067c-11eb-112a-bf213eb4aa58
 function shortest_path_nlp(
 		n, obs_pos, obs_vel, radius_obs, 
 		a, b,
@@ -478,44 +596,6 @@ function shortest_path_nlp(
 
 end
 
-# ╔═╡ ced25ee2-f874-11ea-3db4-bfd63ce72a87
-md"# Benchmark"
-
-# ╔═╡ 5473ac7a-f8ae-11ea-1a13-41a2ebd0b84f
-if debug_mode
-		range_n = [2, 3, ]
-		range_obs_seed = [1, 2]
-		range_speed_obs = [1.]
-		range_solver_seed = [1,]
-else
-	range_n = 2:4
-	range_obs_seed = 1:10
-	range_speed_obs = [0., 1.]
-	range_solver_seed = [1,]
-end
-
-# ╔═╡ 8be8ca2e-f87b-11ea-383c-a75157b2cf35
-function mean(x)
-	sum(x) ./ size(x,1)
-end
-
-# ╔═╡ d358181e-0600-11eb-1ad9-4316519b7784
-function is_path_valid(path, obstacle_setup; tol=1e-2, 
-					num_discretization_points=1000,
-					max_jump=.1)
-	obstacles = generate_obstacle_setup(obstacle_setup)[:obstacles]
-	a = obstacle_setup[:a]
-	b = obstacle_setup[:b]
-	ts = range(0, stop=1, length=num_discretization_points)
-	norm =  LinearAlgebra.norm
-	start_and_dest_const = norm(path(0.) .- a) + norm(path(1.) .- b) < tol
-	collision_avoidance_const = all( f(t, path(t)) >= 0 for t=ts for f=obstacles)
-	continuity_const = all( mean(abs.(path(ti) .- path(tii))) <= max_jump for (ti, tii)=zip(ts[1:end-1], ts[2:end]) )
-	
-	start_and_dest_const && collision_avoidance_const# && continuity_const
-end
-
-
 # ╔═╡ ebc7c88c-05e6-11eb-13cd-455b20227590
 begin
 	function run_nlp(obstacle_setup)
@@ -542,170 +622,45 @@ if n == 2
 	q_rrt_nlp
 end
 
-# ╔═╡ 69813a14-0615-11eb-2398-31b3f1b9c905
-function path_smoothness(path; dt=0.01)
-	P = hcat(path.(0:dt:1)...)
-	sum(std.(eachrow(P[:, 1:end-1] .- P[:, 2:end])))
-end
+# ╔═╡ 0a67abf2-f892-11ea-294f-fb4916d40a49
+md"# Export trajectories"
 
-# ╔═╡ bd7b97e4-f7de-11ea-096f-27a885a176c7
-begin
-	function run_sos(obstacle_setup)
-		generated_obs = generate_obstacle_setup(obstacle_setup)
-		# compute optimal piece-wise linear trajectory
-		Random.seed!(solver_seed)
-		opt_trajectory_sos = find_path_using_heuristic(obstacle_setup[:n], 
-			generated_obs[:obstacles], 
-			edge_size, 
-			obstacle_setup[:a], obstacle_setup[:b],
-			deg_relaxation, num_pieces, solver,
-			weight_lenght,
-			num_sos_iterations,
-			seed=solver_seed)
-		opt_trajectory_sos
+# ╔═╡ 7927af1c-0682-11eb-24aa-8f052b08cab0
+function write_path_to_csv(path, filename; dt=.01)
+	A = path.(0:dt:1)
+	A = hcat(A...)
+	open(filename, "w") do io
+		writedlm(io, A, ',')
 	end
-	opt_trajectory_sos = run_sos(obstacle_setup)
-	is_path_valid(opt_trajectory_sos, obstacle_setup), "smoothness", path_smoothness(opt_trajectory_sos)
 end
 
-# ╔═╡ b3b554bc-05e8-11eb-30ee-13748ef82f3b
-if n == 2
-	q_sos = plot_obstacles(obstacle_setup, opt_trajectory_sos)
-	PyPlot.plot(eachcol(hcat(opt_trajectory_sos.(0:.01:1)...)')...)
-	q_sos
+# ╔═╡ 5417a1a0-0682-11eb-3506-6fde7d621e7e
+write_path_to_csv(opt_trajectory_sos, "csv/sos_path.csv")
+
+# ╔═╡ ae0233ec-0682-11eb-2499-af9a812f4502
+write_path_to_csv(opt_trajectory_rrt_tv, "csv/rrt_tv_path.csv")
+
+# ╔═╡ 7f3a3976-06da-11eb-25af-41dd0860e0c1
+write_path_to_csv(opt_trajectory_nlp, "csv/nlp_path.csv")
+
+# ╔═╡ 4a411f22-06db-11eb-1c20-252d8317e44d
+open("csv/obs_pos.csv", "w") do io
+		writedlm(io, generated_obstacles[:obs_pos], ',')
 end
 
-# ╔═╡ 3eda12e4-0616-11eb-3791-03110d0f8432
-LinearAlgebra.norm(opt_trajectory_sos(0.) .- opt_trajectory_sos(0.01))
-
-# ╔═╡ 937f9bac-f874-11ea-1d59-77ff8d0aaef0
-begin
-	function run_rrt(obstacle_setup)
-	generated_obs = generate_obstacle_setup(obstacle_setup)
-
-		
-	Random.seed!(solver_seed)
-	path_found, node_positions, graph_edges = rrt_find_path(obstacle_setup[:n],
-			obstacle_setup[:a], obstacle_setup[:b],
-		generated_obs[:check_collision], generated_obs[:check_collision_segment];
-		num_iterations=num_rrt_iterations, step_size=step_size,
-		radius_goal= .3)
-	opt_trajectory_rrt = t-> rrt_nodes_to_path(node_positions, graph_edges, t)
-	end
-	opt_trajectory_rrt = run_rrt(obstacle_setup)
-	is_path_valid(opt_trajectory_rrt, obstacle_setup), "smoothness", path_smoothness(opt_trajectory_rrt)
-	
-	
+# ╔═╡ 630cd5dc-06db-11eb-0e79-a5571215b21b
+open("csv/obs_vel.csv", "w") do io
+		writedlm(io, generated_obstacles[:obs_vel], ',')
 end
 
-# ╔═╡ 8bf7a05a-0602-11eb-0940-1b290811b69d
-if n == 2
-	q_rrt = plot_obstacles(obstacle_setup, opt_trajectory_rrt)
-	PyPlot.plot(eachcol(hcat(opt_trajectory_rrt.(0:.01:1)...)')...)
-	q_rrt
-end
+# ╔═╡ c5755892-06dc-11eb-3c31-8504814f834b
+md"""
+```cp ~/Dev/PathPlanningSOS.jl/pluto_notebooks/csv/{*path,obs_pos,obs_vel}.csv  ~/Dropbox/Blender/moving-obstacles-icra-2020/assets/```"""
 
-# ╔═╡ 3408f502-05ed-11eb-1316-cdd8235769bf
-begin
-	function run_rrt_tv(obstacle_setup)
-	generated_obs = generate_obstacle_setup(obstacle_setup)
-
-		
-	Random.seed!(solver_seed)
-	path_found, node_positions, graph_edges = rrt_find_path_tv(obstacle_setup[:n],
-			obstacle_setup[:a], obstacle_setup[:b],
-		generated_obs[:check_collision_tv], generated_obs[:check_collision_segment_tv];
-		num_iterations=num_rrt_iterations, step_size=step_size,
-		radius_goal= .3)
-		opt_trajectory_rrt_tv = t-> rrt_nodes_to_path_tv(node_positions, graph_edges, t)[1:end-1]
-		opt_trajectory_rrt_tv
-	end
-	opt_trajectory_rrt_tv = run_rrt_tv(obstacle_setup)
-	is_path_valid(opt_trajectory_rrt_tv, obstacle_setup), "smoothness", path_smoothness(opt_trajectory_rrt_tv)
-end
-
-# ╔═╡ d24f3e22-0603-11eb-360d-b789b9e18a3a
-if n == 2
-	q_rrt_tv = plot_obstacles(obstacle_setup, opt_trajectory_rrt_tv)
-	PyPlot.plot(eachcol(hcat(opt_trajectory_rrt_tv.(0:.01:1)...)')...)
-	q_rrt_tv
-end
-
-# ╔═╡ cbaba87a-f876-11ea-0533-756c79f0c51c
-begin
-
-results = []
-for obs_seed=range_obs_seed
-# for solver_seed=range_solver_seed
-for speed_obs=range_speed_obs
-for n=range_n
-	current_run = (obs_seed, solver_seed, n, speed_obs)
-	@show (obs_seed, solver_seed, n, speed_obs)
-	#@show current_run
-	
-	obstacle_setup = Dict(:n => n, 
-					:a => [-.99 for _ in 1:n],
-					:b => [.99 for _ in 1:n],
-	:number_obs => number_obs, 
-	:speed_obs => speed_obs,
-	:radius_obs => radius_obs,
-	:obs_seed => obs_seed)
-
-	time_sos = @elapsed run_sos_result =  run_sos(obstacle_setup)
-	time_nlp = @elapsed run_nlp_result = run_nlp(obstacle_setup)
-	time_rrt = @elapsed run_rrt_result = run_rrt(obstacle_setup)
-	time_rrt_tv = @elapsed run_rrt_tv_result = run_rrt_tv(obstacle_setup)
-
-	result_run = Dict(:sos => Dict(:time=>time_sos, :path => run_sos_result),
-					:nlp => Dict(:time => time_nlp, :path => run_nlp_result),
-					:rrt => Dict(:time => time_rrt, :path => run_rrt_result),
-					:rrt_tv => Dict(:time => time_rrt_tv, :path => run_rrt_tv_result),
-					)
-	push!(results, (obstacle_setup, result_run))		
-end
-end
-end
-end
-
-
-# ╔═╡ 24ecf380-05f3-11eb-2a71-5d9796f7145d
-begin
-	result_stat = []
-	
-	println("Evaluating quality of paths...")
-	for run=results
-		obstacle_setup = run[1]
-		@show run[1]
-		push!(result_stat, 
-				merge(obstacle_setup,
-				[Dict(
-				Symbol(:valid, "_", method) => is_path_valid( run[2][method][:path], obstacle_setup),
-				Symbol(:length, "_", method) => length_path( run[2][method][:path]),
-				Symbol(:time, "_", method) =>  run[2][method][:time],
-				Symbol(:smooth, "_", method) =>  path_smoothness(run[2][method][:path]),
-					)
-				for method=(:sos, :rrt, :nlp, :rrt_tv)]...
-			))
-	end
-	println("Evaluating quality of paths done.")
-	result_stat = DataFrame(result_stat)
-end
-
-# ╔═╡ 081fd8ba-f883-11ea-2dd2-d3d39e7fcf8b
-md"# Save to file"
-
-# ╔═╡ 2992287a-0820-11eb-0f1a-bb975f4c110a
-result_stat[:, :smooth_rrt_tv]
-
-# ╔═╡ 9f54ed10-f881-11ea-0db8-23fa207bd876
-begin
-	CSV.write("csv/results_benchmark-$(Dates.now()).csv", result_stat)
-	CSV.write("csv/results_benchmark-latest.csv", result_stat)
-end
 
 # ╔═╡ Cell order:
 # ╟─c3d41f9e-f7de-11ea-2a56-b76588d6ef66
-# ╠═79575ad0-f7de-11ea-2e97-97d0955e0194
+# ╟─79575ad0-f7de-11ea-2e97-97d0955e0194
 # ╟─98a3f246-05e8-11eb-201d-a133f7585b7c
 # ╠═a39d4a4a-05e7-11eb-2f92-e118170808f8
 # ╟─abd44b0a-05e7-11eb-07ed-c7c73096570e
@@ -718,46 +673,50 @@ end
 # ╟─d47719ac-05e7-11eb-35b4-ed887c5c643f
 # ╠═d86e55c8-05e7-11eb-037d-894ea2b56788
 # ╠═de847bf6-05e7-11eb-39ca-874f2cdd74fc
-# ╟─587fb63e-066d-11eb-3499-0ff6ff490bb2
+# ╠═587fb63e-066d-11eb-3499-0ff6ff490bb2
 # ╟─1d3b7e12-05e8-11eb-3f76-3b7dc80b948f
 # ╠═e856be64-05e7-11eb-2260-77c2b187e2ed
 # ╠═ec1ce6ea-05e7-11eb-3816-11b297344745
 # ╠═f06b8128-05e7-11eb-23db-5fbe3f7cd461
-# ╠═90161a4a-f7de-11ea-186d-972892ea3c26
+# ╟─90161a4a-f7de-11ea-186d-972892ea3c26
 # ╟─e590ec80-f87d-11ea-153d-5d9bed4819a5
-# ╠═1631c244-05f1-11eb-330a-4b2bdc5073a0
-# ╠═2011598c-05ec-11eb-1890-850db5315bd5
-# ╠═4d5b9cae-0605-11eb-2cf3-576448d0439e
+# ╟─1631c244-05f1-11eb-330a-4b2bdc5073a0
+# ╟─2011598c-05ec-11eb-1890-850db5315bd5
+# ╟─4d5b9cae-0605-11eb-2cf3-576448d0439e
 # ╟─691cc1b2-0604-11eb-01a1-e9db3148a92a
+# ╟─75388fd6-0680-11eb-032e-859e0a5b77f4
+# ╠═a868fe90-0680-11eb-25f0-fb0c836b231f
+# ╟─abc33092-0680-11eb-373d-294e074f4df9
 # ╟─c6c0c038-0600-11eb-1c80-b51afcbbab50
 # ╟─cb6f6e86-0600-11eb-33ec-416d9a847dc3
-# ╟─d358181e-0600-11eb-1ad9-4316519b7784
+# ╠═d358181e-0600-11eb-1ad9-4316519b7784
+# ╠═3909a674-0682-11eb-163d-036dd6fac684
 # ╟─8981d24e-f874-11ea-0685-73fd3c241512
-# ╟─bd7b97e4-f7de-11ea-096f-27a885a176c7
+# ╠═bd7b97e4-f7de-11ea-096f-27a885a176c7
 # ╠═b3b554bc-05e8-11eb-30ee-13748ef82f3b
 # ╠═3eda12e4-0616-11eb-3791-03110d0f8432
 # ╟─725babbe-f874-11ea-2552-9d3968d8b8d9
-# ╠═72811ea2-f875-11ea-2c97-b1b5aa72c872
-# ╠═771b7552-f875-11ea-3b2c-d7bb19dac4f1
-# ╠═09836820-05ee-11eb-08df-993638bce61f
-# ╠═937f9bac-f874-11ea-1d59-77ff8d0aaef0
+# ╟─72811ea2-f875-11ea-2c97-b1b5aa72c872
+# ╟─771b7552-f875-11ea-3b2c-d7bb19dac4f1
+# ╟─09836820-05ee-11eb-08df-993638bce61f
+# ╟─937f9bac-f874-11ea-1d59-77ff8d0aaef0
 # ╠═8bf7a05a-0602-11eb-0940-1b290811b69d
 # ╟─28bd2dd0-05ed-11eb-3389-4dc1b4c7bfe1
 # ╟─68ed372c-f875-11ea-1e3d-07d9438dc9d5
 # ╟─b696d130-05e9-11eb-374c-1b166d28069d
 # ╟─2bf3de7c-05ed-11eb-2189-9b7d947b3c19
-# ╠═3408f502-05ed-11eb-1316-cdd8235769bf
+# ╟─3408f502-05ed-11eb-1316-cdd8235769bf
 # ╟─d24f3e22-0603-11eb-360d-b789b9e18a3a
 # ╟─43e4f67a-05e4-11eb-29d3-83cd2faaee75
-# ╠═6bce6542-05e5-11eb-1322-81821b08c030
-# ╟─ebc7c88c-05e6-11eb-13cd-455b20227590
-# ╟─fce9d6a4-0603-11eb-10c7-27fc653d8c99
-# ╟─ced25ee2-f874-11ea-3db4-bfd63ce72a87
-# ╠═5473ac7a-f8ae-11ea-1a13-41a2ebd0b84f
-# ╠═cbaba87a-f876-11ea-0533-756c79f0c51c
-# ╠═24ecf380-05f3-11eb-2a71-5d9796f7145d
-# ╟─8be8ca2e-f87b-11ea-383c-a75157b2cf35
-# ╟─69813a14-0615-11eb-2398-31b3f1b9c905
-# ╟─081fd8ba-f883-11ea-2dd2-d3d39e7fcf8b
-# ╠═2992287a-0820-11eb-0f1a-bb975f4c110a
-# ╠═9f54ed10-f881-11ea-0db8-23fa207bd876
+# ╟─7162a346-067c-11eb-112a-bf213eb4aa58
+# ╠═ebc7c88c-05e6-11eb-13cd-455b20227590
+# ╠═fce9d6a4-0603-11eb-10c7-27fc653d8c99
+# ╟─0a67abf2-f892-11ea-294f-fb4916d40a49
+# ╠═a0d8569c-0682-11eb-32aa-9ba33e890691
+# ╠═7927af1c-0682-11eb-24aa-8f052b08cab0
+# ╠═5417a1a0-0682-11eb-3506-6fde7d621e7e
+# ╠═ae0233ec-0682-11eb-2499-af9a812f4502
+# ╠═7f3a3976-06da-11eb-25af-41dd0860e0c1
+# ╠═4a411f22-06db-11eb-1c20-252d8317e44d
+# ╠═630cd5dc-06db-11eb-0e79-a5571215b21b
+# ╠═c5755892-06dc-11eb-3c31-8504814f834b
