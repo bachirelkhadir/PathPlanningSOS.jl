@@ -1,9 +1,9 @@
 # PathPlanningSOS.jl
 
 
-This package contains the code that was used in the numerical experiments of the paper PLACEHOLDER.
+This package contains the code that was used in the numerical experiments of the paper Piecewise-Linear  Motion  Planningamidst  Static,  Moving,  or  Morphing  Obstacles.
 
-Abstract: <Placeholder>
+Abstract: We propose a novel method for planning shortestlength piecewise-linear motions through complex environmentspunctured  with  static,  moving,  or  even  morphing  obstacles.Using  a  moment  optimization  approach,  we  formulate  a  hier-archy  of  semidefinite  programs  that  yield  increasingly  refinedlower  bounds  converging  monotonically  to  the  optimal  pathlength.   For   computational   tractability,   our   global   momentoptimization  approach  motivates  an  iterative  motion  plannerthat   outperforms   competing   sampling-based   and   nonlinearoptimization baselines. Our method natively handles continuoustime  constraints  without  any  need  for  time  discretization,  andhas  the  potential  to  scale  better  with  dimensions  compared  topopular  sampling-based  methods.
 
 <a href="https://youtu.be/8VXckZWe-VQ"><img alt="Path Planning using SOS - Example 1" src="https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/path_planning_animation.gif" height=250px/></a> <a href="https://youtu.be/6ThKwE0B9yA"><img alt="Path Planning using SOS - Example 2" src="https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/path_planning_animation_2.gif" height=250px/></a>
 
