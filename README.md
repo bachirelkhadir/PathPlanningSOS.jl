@@ -105,7 +105,7 @@ display("text/html", """<video controls src="data:video/x-m4v;base64,$base64_vid
 ```
 
 
-# Some Experiments
+# Some Experiments from the Paper
 
 <img alt="Biarm Manipulation" src="https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/biarm_manip_sos.gif" height=250px/>
 
