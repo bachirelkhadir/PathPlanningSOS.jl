@@ -3,6 +3,10 @@
 
 This package contains the code that was used in the numerical experiments of the paper Piecewise-Linear  Motion  Planningamidst  Static,  Moving,  or  Morphing  Obstacles.
 
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/AxLM-wQqYnc" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+
 Abstract: We propose a novel method for planning shortestlength piecewise-linear motions through complex environmentspunctured  with  static,  moving,  or  even  morphing  obstacles.Using  a  moment  optimization  approach,  we  formulate  a  hier-archy  of  semidefinite  programs  that  yield  increasingly  refinedlower  bounds  converging  monotonically  to  the  optimal  pathlength.   For   computational   tractability,   our   global   momentoptimization  approach  motivates  an  iterative  motion  plannerthat   outperforms   competing   sampling-based   and   nonlinearoptimization baselines. Our method natively handles continuoustime  constraints  without  any  need  for  time  discretization,  andhas  the  potential  to  scale  better  with  dimensions  compared  topopular  sampling-based  methods.
 
 <a href="https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/Path_Planing_Proofs.pdf">Proofs.</a>
