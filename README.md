@@ -5,7 +5,9 @@ This package contains the code that was used in the numerical experiments of the
 
 
 [![3min Video](https://img.youtube.com/vi/AxLM-wQqYnc/maxresdefault.jpg=400x)](https://www.youtube.com/watch?v=AxLM-wQqYnc)
-<a href="https://www.youtube.com/watch?v=AxLM-wQqYnc"> <img src=(https://img.youtube.com/vi/AxLM-wQqYnc/maxresdefault.jpg" width="400" height="225" /></a>
+
+
+<a href="https://www.youtube.com/watch?v=AxLM-wQqYnc"> <img src="https://img.youtube.com/vi/AxLM-wQqYnc/maxresdefault.jpg" width="400" height="225" /></a>
 
 Abstract: We propose a novel method for planning shortestlength piecewise-linear motions through complex environmentspunctured  with  static,  moving,  or  even  morphing  obstacles.Using  a  moment  optimization  approach,  we  formulate  a  hier-archy  of  semidefinite  programs  that  yield  increasingly  refinedlower  bounds  converging  monotonically  to  the  optimal  pathlength.   For   computational   tractability,   our   global   momentoptimization  approach  motivates  an  iterative  motion  plannerthat   outperforms   competing   sampling-based   and   nonlinearoptimization baselines. Our method natively handles continuoustime  constraints  without  any  need  for  time  discretization,  andhas  the  potential  to  scale  better  with  dimensions  compared  topopular  sampling-based  methods.
 
