@@ -3,7 +3,16 @@
 
 This package contains the code that was used in the numerical experiments of the paper Piecewise-Linear  Motion  Planningamidst  Static,  Moving,  or  Morphing  Obstacles.
 
-Abstract: We propose a novel method for planning shortestlength piecewise-linear motions through complex environmentspunctured  with  static,  moving,  or  even  morphing  obstacles.Using  a  moment  optimization  approach,  we  formulate  a  hier-archy  of  semidefinite  programs  that  yield  increasingly  refinedlower  bounds  converging  monotonically  to  the  optimal  pathlength.   For   computational   tractability,   our   global   momentoptimization  approach  motivates  an  iterative  motion  plannerthat   outperforms   competing   sampling-based   and   nonlinearoptimization baselines. Our method natively handles continuoustime  constraints  without  any  need  for  time  discretization,  andhas  the  potential  to  scale  better  with  dimensions  compared  topopular  sampling-based  methods.
+
+
+<a href="https://www.youtube.com/watch?v=AxLM-wQqYnc"> <img alt="3min Video" src="https://img.youtube.com/vi/AxLM-wQqYnc/maxresdefault.jpg" width="400" height="225" /></a>
+
+<b>Abstract:</b> We propose a novel method for planning shortest length piecewise-linear motions through complex environments punctured with static, moving, or even morphing obstacles. Using a moment optimization approach, we formulate a hierarchy of semidefinite programs that yield increasingly refined lower bounds converging monotonically to the optimal path length.
+
+For computational tractability, our global moment optimization approach motivates an iterative motion planner that outperforms competing sampling-based and nonlinear optimization baselines. Our method natively handles continuous time constraints without any need for time discretization, and has the potential to scale better with dimensions compared to popular sampling-based methods.
+
+<a href="https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/Path_Planing_Proofs.pdf">Proofs.</a>
+
 
 <a href="https://youtu.be/8VXckZWe-VQ"><img alt="Path Planning using SOS - Example 1" src="https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/path_planning_animation.gif" height=250px/></a> <a href="https://youtu.be/6ThKwE0B9yA"><img alt="Path Planning using SOS - Example 2" src="https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/path_planning_animation_2.gif" height=250px/></a>
 
@@ -98,7 +107,7 @@ display("text/html", """<video controls src="data:video/x-m4v;base64,$base64_vid
 ```
 
 
-# Some Experiments
+# Some Experiments from the Paper
 
 <img alt="Biarm Manipulation" src="https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/biarm_manip_sos.gif" height=250px/>
 
