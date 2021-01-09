@@ -473,6 +473,9 @@ begin
 	end
 end
 
+# ╔═╡ a92afcb6-0d80-11eb-0dbb-514cce26ff82
+
+
 # ╔═╡ 91e45136-0b73-11eb-229e-8fbeda95fb71
 md"# RRT"
 
@@ -773,6 +776,9 @@ begin
 	
 end
 
+# ╔═╡ ef3aaa1a-0d80-11eb-0877-3b0404ffe0b0
+writedlm( "csv/opttrajectoryall.csv", vcat([ hcat(traj.(0:.01:1)...) for traj in (opt_trajectory, opt_trajectory_rrt, opt_trajectory_nlp)]...)', ',')
+
 # ╔═╡ 03a4080e-0bed-11eb-24b5-f320fe844c26
 md"""
 ```cp  csv/opt*csv csv/fittedellipse.csv csv/obstacles_in_joint_space.csv ~/Overleaf/Path_Planning_ICRA_2020/Imgs/```
@@ -798,9 +804,9 @@ xinit
 # ╟─1a2b598c-0aab-11eb-04c3-dd30094ced04
 # ╟─87e64760-0b8d-11eb-31e3-2db3037716db
 # ╟─bc12162c-0b8d-11eb-1210-0736964d4a3b
-# ╟─eafa3134-0aa6-11eb-2b38-5de4cbe8f1c7
-# ╟─a96bfb76-0aae-11eb-1851-0dba02fb43e9
-# ╟─4438f574-0a74-11eb-3161-67626572c265
+# ╠═eafa3134-0aa6-11eb-2b38-5de4cbe8f1c7
+# ╠═a96bfb76-0aae-11eb-1851-0dba02fb43e9
+# ╠═4438f574-0a74-11eb-3161-67626572c265
 # ╠═47496634-0a77-11eb-129d-4b7f5457c280
 # ╠═56c80608-0aa9-11eb-0793-eb915a75ce3f
 # ╠═5faa5406-0aa9-11eb-1c6c-1d5b9cb9b1ec
@@ -849,6 +855,7 @@ xinit
 # ╠═04a4e1de-0abd-11eb-38ad-51098e49e416
 # ╠═aa39fa40-0b8b-11eb-0791-2fd43fe1d849
 # ╠═5ecd3cc0-0b8e-11eb-1c00-f563b7c2e53e
+# ╠═a92afcb6-0d80-11eb-0dbb-514cce26ff82
 # ╟─91e45136-0b73-11eb-229e-8fbeda95fb71
 # ╟─f18c22f8-0b73-11eb-09b4-f5d16e6baf59
 # ╟─f47ba150-0b73-11eb-17cf-a52d804d0d63
@@ -866,6 +873,7 @@ xinit
 # ╠═fed0ae3e-0b69-11eb-061c-afd56375467a
 # ╠═6d358474-0b7b-11eb-3548-9b287d716ea6
 # ╠═4f45e542-0b78-11eb-3e98-458ace58062b
+# ╠═ef3aaa1a-0d80-11eb-0877-3b0404ffe0b0
 # ╠═03a4080e-0bed-11eb-24b5-f320fe844c26
 # ╠═3b25ae12-0bed-11eb-2ebc-ff7c95c307f5
 # ╠═02567d96-0bf5-11eb-0e34-5941a842ba1e

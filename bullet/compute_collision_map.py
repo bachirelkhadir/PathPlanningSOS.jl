@@ -1,11 +1,23 @@
-#!/usr/bin/env python3
+"""
+Discretize joint space and compute collision map
+"""
 
 import numpy as np
+import pandas as pd
+import os, datetime
 from tqdm import tqdm
 import pybullet as p
 import time
-import pandas as pd
 import pybullet_data
+from shutil import copyfile
+
+RESULT_DIR = os.path.join(os.getcwd(), "collsion-map-results-"+datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+RESULT_DIR
+os.makedirs(RESULT_DIR)
+copyfile("compute_collision_map.py", os.path.join(RESULT_DIR, "compute_collision_map.py"))
+csv_file = os.path.join(RESULT_DIR, "collision_map.pd")
+print("Result dir: ", RESULT_DIR)
+
  # #lower limits for null space
  #    self.ll = [-.967, -2, -2.96, 0.19, -2.96, -2.09, -3.05]
  #    #upper limits for null space
@@ -14,21 +26,21 @@ import pybullet_data
 def cartesian_product(*arrays):
     ndim = len(arrays)
     return np.stack(np.meshgrid(*arrays), axis=-1).reshape(-1, ndim)
+
+NUM_DISC_POINTS = 10
 RANGE_JOINTS = [
-    (-1, 1, 5),
-    (-2, 2, 5),
-    (-2.96, 2.96, 5),
-    (-0.19, 0.19, 5),
-    (-2.96, 2.96, 5),
-    (-2.09, 2.09, 5),
-    (-3.05, -3.05, 5),
+    (-1, 1, NUM_DISC_POINTS),
+    (-2, 2, NUM_DISC_POINTS),
+    (-2.96, 2.96, NUM_DISC_POINTS),
+    (-0.19, 0.19, NUM_DISC_POINTS),
+    (-2.96, 2.96, NUM_DISC_POINTS),
+    (-2.09, 2.09, NUM_DISC_POINTS),
+    (-3.05, 3.05, NUM_DISC_POINTS),
 ]
 
 START_POS = [1.00, 0.4, 0.0, -1.5, 0.00, 1., -0.0]
 END_POS = [-1.00, 0.4, 0.0, -1.5, 0.00, 1., -0.0]
 
-START_POS = np.array(START_POS)
-END_POS = np.array(END_POS)
 
 OBSTACLE_POSE = ([.5, 0, 0.5], p.getQuaternionFromEuler([90, 0.,0]))
 
@@ -91,35 +103,20 @@ def test_collision_configuration(joint_angles, pos_obstacle):
     return test_collision()
 
 
+for i, j in tqdm(enumerate(GRID_JOINTS), total=len(GRID_JOINTS)):
+    grid_joints_collision[i] = test_collision_configuration(j, OBSTACLE_POSE[0])
 
-np.where(y)
-test_collision_configuration(data[np.where(y)[0][-1], :], OBSTACLE_POSE[0])
-
-d = np.eye(7)[1]
-t = .6
-print(t**2 * d.T @ Cinv @ d)
-test_collision_configuration(mu + t * d, OBSTACLE_POSE[0])
-
-
-
-ellipsoid = pd.read_csv("collsion-map-results-2021-01-08_21-46-27/collision_ellipsoid.pd")
-Q = ellipsoid[[f'Q{i}' for i in range(7)]].values
-mu = ellipsoid['mu'].values
-
-u = t * START_POS + (1-t) * END_POS
-(u-mu).T @ Q @ (u-mu)
-
-START_POS
-data[9, :]
-t = 0.5
-test_collision_configuration(t * START_POS + (1-t) * END_POS, OBSTACLE_POSE[0])
+collision_map =  pd.DataFrame(GRID_JOINTS, columns=["j{i}".format(i=i) for i in range(7)])
+collision_map['collide'] = grid_joints_collision
+print("Saving to: ", csv_file) 
+collision_map.to_csv(csv_file)
+exit()
 
 
-OBSTACLE_POS = [.5, 0, 0.5]
-test_collision_configuration(START_POS, OBSTACLE_POS)
 
-test_collision_configuration([0., 0.4, 0.0, -1.5, 0.0, 1.0, -0.0], OBSTACLE_POS)
-test_collision_configuration(END_POS, OBSTACLE_POS)
+test_collision_configuration(START_POS, OBSTACLE_POSE[0])
+test_collision_configuration([0., 0.4, 0.0, -1.5, 0.0, 1.0, -0.0], OBSTACLE_POSE[0])
+test_collision_configuration(END_POS, OBSTACLE_POSE[0])
 
 ##################################
 p.resetJointState(robot, 1, 0.)

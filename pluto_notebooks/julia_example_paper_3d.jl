@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.11.14
+# v0.12.2
 
 using Markdown
 using InteractiveUtils
@@ -68,7 +68,7 @@ num_sos_iterations = 20
 num_rrt_iterations = 10000
 
 # ╔═╡ cb711d12-05e7-11eb-3056-5fa4b9853578
-num_pieces = 5
+num_pieces = 10
 
 # ╔═╡ cf3ed704-05e7-11eb-042c-bb774ba8306e
 weight_lenght = .1
@@ -258,7 +258,7 @@ if n == 2
 end
 
 # ╔═╡ 3eda12e4-0616-11eb-3791-03110d0f8432
-LinearAlgebra.norm(opt_trajectory_sos(0.) .- opt_trajectory_sos(0.01))
+opt_trajectory_sos.(0:.1:1)
 
 # ╔═╡ 725babbe-f874-11ea-2552-9d3968d8b8d9
 md"# RRT"
@@ -529,6 +529,18 @@ begin
 	is_path_valid(opt_trajectory_rrt_tv, obstacle_setup)
 end
 
+# ╔═╡ aafbfca4-0ccd-11eb-0cc0-818b5dc85d97
+begin
+	opt_path_sos_discretized = hcat(opt_trajectory_sos.(0:.01:1)...)
+		Plots.plot([opt_path_sos_discretized[i, :] for i=1:size(opt_path_sos_discretized,1)]...,
+		lw=4, c="blue", label="sos")
+		
+	# RRT TV
+	opt_path_rrt_discretized = hcat(opt_trajectory_rrt_tv.(0:.01:1)...)
+		Plots.plot!([opt_path_rrt_discretized[i, :] for i=1:size(opt_path_rrt_discretized,1)]...,
+		lw=4, c="red", label="RRT TV")
+end
+
 # ╔═╡ d24f3e22-0603-11eb-360d-b789b9e18a3a
 if n == 2
 	q_rrt_tv = plot_obstacles(obstacle_setup, opt_trajectory_rrt_tv)
@@ -668,7 +680,7 @@ md"""
 # ╠═ba98a5aa-05e7-11eb-06c9-653431e3ec70
 # ╠═c793b196-05e7-11eb-3fd5-dd7fd6b48e49
 # ╠═e956f92a-05ea-11eb-3849-c9c3cdf5fb47
-# ╟─cb711d12-05e7-11eb-3056-5fa4b9853578
+# ╠═cb711d12-05e7-11eb-3056-5fa4b9853578
 # ╟─cf3ed704-05e7-11eb-042c-bb774ba8306e
 # ╟─d47719ac-05e7-11eb-35b4-ed887c5c643f
 # ╠═d86e55c8-05e7-11eb-037d-894ea2b56788
@@ -687,6 +699,7 @@ md"""
 # ╟─75388fd6-0680-11eb-032e-859e0a5b77f4
 # ╠═a868fe90-0680-11eb-25f0-fb0c836b231f
 # ╟─abc33092-0680-11eb-373d-294e074f4df9
+# ╠═aafbfca4-0ccd-11eb-0cc0-818b5dc85d97
 # ╟─c6c0c038-0600-11eb-1c80-b51afcbbab50
 # ╟─cb6f6e86-0600-11eb-33ec-416d9a847dc3
 # ╠═d358181e-0600-11eb-1ad9-4316519b7784
@@ -705,7 +718,7 @@ md"""
 # ╟─68ed372c-f875-11ea-1e3d-07d9438dc9d5
 # ╟─b696d130-05e9-11eb-374c-1b166d28069d
 # ╟─2bf3de7c-05ed-11eb-2189-9b7d947b3c19
-# ╟─3408f502-05ed-11eb-1316-cdd8235769bf
+# ╠═3408f502-05ed-11eb-1316-cdd8235769bf
 # ╟─d24f3e22-0603-11eb-360d-b789b9e18a3a
 # ╟─43e4f67a-05e4-11eb-29d3-83cd2faaee75
 # ╟─7162a346-067c-11eb-112a-bf213eb4aa58
