@@ -42,8 +42,8 @@ n = 2*num_cars # dimension of the space
 max_deg_uv = 2 # degree of moment relaxation
 num_pieces = 10 # number of linear pieces
 num_iterations=20 # number of iterations of the heuristic
-weight_lenght= .1 # trade off between minimizing length and rank
-random_seed = 1 # random seed used to initialize the heuristic
+weight_lenght= .08 # trade off between minimizing length and rank
+random_seed = 0 # random seed used to initialize the heuristic
 a = [0., -1., 1., 0., 0., 1., -1., 0.]
 b = [0., 1., -1., 0., 0., -1., 1., 0.]
 # a = a .+ rand(Float32, 8) ./ 5.
@@ -104,6 +104,10 @@ println("@ ", Dates.format(now(), "HH:MM:SS"))
 @show st_opt
 plot_sequence(opt_trajectory_nlp, edge_size, g_plots)
 
+
+writedlm( "csv/computed_trajectory_sos.csv",  hcat(opt_trajectory.(0:.05:1)...), ',')
+writedlm( "csv/computed_trajectory_rrt.csv",  hcat(opt_trajectory_rrt.(0:.05:1)...), ',')
+writedlm( "csv/computed_trajectory_nlp.csv",  hcat(opt_trajectory_nlp.(0:.05:1)...), ',')
 if false
     plot_sequence(opt_trajectory, edge_size, g_plots)
     plot_sequence(opt_trajectory_rrt, edge_size, g_plots)

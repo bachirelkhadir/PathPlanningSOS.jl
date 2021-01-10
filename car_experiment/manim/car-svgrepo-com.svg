@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   id="Layer_1"
+   x="0px"
+   y="0px"
+   viewBox="0 0 473.999 473.999"
+   style="enable-background:new 0 0 473.999 473.999;"
+   xml:space="preserve"
+   sodipodi:docname="car-svgrepo-com.svg"
+   inkscape:version="1.0.1 (0767f8302a, 2020-10-17)"><metadata
+   id="metadata1379"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs1377" /><sodipodi:namedview
+   pagecolor="#373737"
+   bordercolor="#666666"
+   borderopacity="1"
+   objecttolerance="10"
+   gridtolerance="10"
+   guidetolerance="10"
+   inkscape:pageopacity="0"
+   inkscape:pageshadow="2"
+   inkscape:window-width="1902"
+   inkscape:window-height="2098"
+   id="namedview1375"
+   showgrid="false"
+   inkscape:zoom="2.3797519"
+   inkscape:cx="236.9995"
+   inkscape:cy="236.9995"
+   inkscape:window-x="1921"
+   inkscape:window-y="5"
+   inkscape:window-maximized="0"
+   inkscape:current-layer="Layer_1" />
+<circle
+   style="fill:#E8E8DF;"
+   cx="237.011"
+   cy="236.967"
+   r="236.967"
+   id="circle1314" />
+<path
+   style="fill:#89932C;"
+   d="M470.663,197.424C458.465,124.908,413.68,64.441,352.715,30.245  c-25.433,7.199-48.127,40.763-48.127,40.763l-44.164,50.364l-8.146-7.147c0,0-30.035-30.709-53.5-30.507  c-23.446,0.206-46.466,34.293-46.466,34.293l-23.465,26.754c-4.284-4.198-26.698-25.283-44.722-25.13  c-19.985,0.18-39.629,29.238-39.629,29.238L3.692,195.411c-0.075,0.382-0.127,0.767-0.191,1.149L470.663,197.424z"
+   id="path1316" />
+<path
+   style="fill:#AA865B;"
+   d="M473.462,221.495c-0.535-8.153-1.478-16.183-2.799-24.075L3.505,196.556  c-3.121,18.099-4.236,36.834-2.978,55.97c2.664,40.617,15.424,78.17,35.659,110.383c44.823,71.348,126.345,116.478,216.324,110.574  c89.971-5.905,164.904-61.294,200.017-137.885C468.385,301.016,476.13,262.12,473.462,221.495z"
+   id="path1318" />
+<path
+   style="fill:#B1C635;"
+   d="M375.285,211.201l-244.466,0.079c43.637-51.775,86.042-64.265,125.949-64.276  C299.17,146.989,345.336,161.945,375.285,211.201z"
+   id="path1320" />
+<g
+   id="g1326">
+	<path
+   style="fill:#A2DADB;"
+   d="M249.303,210.487l-98.533,0.03c34.136-40.497,67.3-50.267,98.521-50.275L249.303,210.487z"
+   id="path1322" />
+	<path
+   style="fill:#A2DADB;"
+   d="M261.161,210.479l98.536-0.03c-34.159-40.479-67.337-50.222-98.555-50.215L261.161,210.479z"
+   id="path1324" />
+</g>
+<path
+   style="fill:#B1C635;"
+   d="M366.574,286.662c0,0-310.408,0.101-321.169,0.108c-7.487,0-8.116-14.975-8.116-14.975  c-0.022-67.348,102.263-61.141,102.263-61.141l235.415-0.075c0,0,17.571,10.559,36.486,13.71  c14.032,2.327,18.716,14.335,18.72,27.431C430.177,268.713,419.58,278.228,366.574,286.662z"
+   id="path1328" />
+<path
+   style="fill:#A6B232;"
+   d="M219.518,281.102c-104.272-1.841-181.522-3.843-181.522-3.843s-0.109,1.175-0.464,4.445  c-0.442,4.116,1.605,6.941,4.636,6.941l324.095-0.101l0.621-7.491C335.083,279.815,323.791,282.935,219.518,281.102z"
+   id="path1330" />
+<g
+   id="g1336">
+	<circle
+   style="fill:#202121"
+   cx="106.202"
+   cy="275.845"
+   r="38.353001"
+   id="circle1332" />
+	<circle
+   style="fill:#202121"
+   cx="330.70499"
+   cy="275.76999"
+   r="38.353001"
+   id="circle1334" />
+</g>
+<g
+   id="g1342">
+	<circle
+   style="fill:#818282"
+   cx="106.206"
+   cy="275.845"
+   r="18.709"
+   id="circle1338" />
+	<circle
+   style="fill:#818282"
+   cx="330.70499"
+   cy="275.76999"
+   r="18.709"
+   id="circle1340" />
+</g>
+<g
+   id="g1344">
+</g>
+<g
+   id="g1346">
+</g>
+<g
+   id="g1348">
+</g>
+<g
+   id="g1350">
+</g>
+<g
+   id="g1352">
+</g>
+<g
+   id="g1354">
+</g>
+<g
+   id="g1356">
+</g>
+<g
+   id="g1358">
+</g>
+<g
+   id="g1360">
+</g>
+<g
+   id="g1362">
+</g>
+<g
+   id="g1364">
+</g>
+<g
+   id="g1366">
+</g>
+<g
+   id="g1368">
+</g>
+<g
+   id="g1370">
+</g>
+<g
+   id="g1372">
+</g>
+</svg>
