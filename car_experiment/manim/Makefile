@@ -19,6 +19,10 @@ video:
 
 all:
 	manim $(filename)  Trajectories --high_quality  --save_pngs --leave_progress_bars
+copy:
+	cp "media/images/car_experiment/*png" "/home/bachir/Overleaf/Path_Planning_ICRA_2020/Imgs/car_experiment/"
+
+
 play:
 	xdg-open /home/bachir/Dev/PathPlanningSOS.jl/car_experiment/manim/media/videos/car_experiment/1080p60/Trajectories.mp4
 

@@ -105,6 +105,15 @@ class CarExperiment(Scene):
         self.circles = circles
 
         self.current_caption = Tex("")
+
+        # Hide ped 0 and 2
+        self.remove(pedestrians[0])
+        self.remove(pedestrians[2])
+        # self.remove(circles[5])
+        self.remove(circles[6])
+        self.remove(circles[4])
+        self.remove(arrows[1])
+
     def caption(self, message):
         self.remove(self.current_caption)
         self.current_caption = Tex(message).to_corner(RIGHT).set_color(BLACK)
@@ -121,8 +130,7 @@ class Trajectories(CarExperiment):
         self.wait(WAIT_TIME)
 
     def add_trajectory(self):
-
-        sos =pd.read_csv("../csv/computed_trajectory_sos.csv", header=None).values[:, ::1] * UNIT
+        sos = pd.read_csv("../csv/computed_trajectory_sos.csv", header=None).values[:, ::1] * UNIT
         rrt = pd.read_csv("../csv/computed_trajectory_rrt.csv", header=None).values[:, ::1] * UNIT
         self.remove(*self.arrows)
 
