@@ -11,6 +11,7 @@ config.background_color = WHITE
 config.max_files_cached = 10000
 
 UNIT = 3
+WAIT_TIME = 1./60.
 
 def load_img(filename):
     if filename.endswith(".svg"):
@@ -31,7 +32,7 @@ def color_car(car, color):
 
 
 # def load_csv_files():
-COLORS = (RED, BLUE, GREEN, YELLOW)
+COLORS = (RED, BLUE, GREEN, YELLOW_E)
 
 def circle_cars(cars):
     circles = [Circle(color=col, radius=1/5 * UNIT, fill_color=col, fill_opacity=.3).move_to(c) for c, col in zip(cars, COLORS) ]
@@ -47,6 +48,7 @@ class CarExperiment(Scene):
     def construct(self):
         self.add(NumberPlane().scale(UNIT/2))
         arrows = []
+        circles = []
         pedestrians = [load_img("French-Pedestrian-Silhouette.svg").scale(.3).set_color(BLACK)
                         for i in range(3)]
         cars = [color_car(load_img("car-svgrepo-com.svg")[3:].scale(.8), c)
@@ -57,12 +59,18 @@ class CarExperiment(Scene):
         cars[1].move_to([0, UNIT, 0]).rotate(PI/2)
         cars[2].move_to([UNIT, 0, 0])
         cars[3].move_to([-UNIT,0, 0]).flip()
-        self.add(circle_cars(cars))
+
+        car_circles = circle_cars(cars)
+        self.add(car_circles)
+        circles.extend(car_circles)
 
         pedestrians = stack_group_text(pedestrians)
         pedestrians[1].move_to([-UNIT, UNIT, 0]).rotate(PI/6).flip()
         pedestrians[2].move_to([UNIT, UNIT, 0]).rotate(PI/6)
-        self.add(circle_pedestrians(pedestrians))
+
+        ped_circles = circle_pedestrians(pedestrians)
+        self.add(ped_circles)
+        circles.extend(ped_circles)
 
         for i, p in enumerate(pedestrians[1:]):
             arr = Arrow(p, Dot(), buff=MED_LARGE_BUFF).set_color(BLACK).shift(UP+(-1)**i*LEFT/2).scale(.5)
@@ -91,18 +99,63 @@ class CarExperiment(Scene):
         self.add(arr)
         arrows.append(arr)
 
+        self.cars = cars
+        self.pedestrians = pedestrians
+        self.arrows = arrows
+        self.circles = circles
 
-        # self.add_trajectory()
-        self.wait()
+        self.current_caption = Tex("")
+    def caption(self, message):
+        self.remove(self.current_caption)
+        self.current_caption = Tex(message).to_corner(RIGHT).set_color(BLACK)
+        self.add(self.current_caption)
 
+
+
+class Trajectories(CarExperiment):
+    def construct(self):
+        CarExperiment.construct(self)
+
+        self.wait(WAIT_TIME)
+        self.add_trajectory()
+        self.wait(WAIT_TIME)
 
     def add_trajectory(self):
 
-        sos =pd.read_csv("../csv/computed_trajectory_sos.csv", header=None).values * UNIT
-        rrt=pd.read_csv("../csv/computed_trajectory_rrt.csv", header=None).values * UNIT
-        for traj in (sos, rrt):
-            path = VMobject()
-            path.set_points_as_corners(list(zip(traj[0, :], traj[1, :], [0] * len(sos[0]))))
-            path.set_color(BLACK)
-            
-            self.add(path)
+        sos =pd.read_csv("../csv/computed_trajectory_sos.csv", header=None).values[:, ::1] * UNIT
+        rrt = pd.read_csv("../csv/computed_trajectory_rrt.csv", header=None).values[:, ::1] * UNIT
+        self.remove(*self.arrows)
+
+        ped_pos = np.array([[-1, 1, 0], [1, 1, 0]]) * UNIT
+        ped_vel = np.array([[1, -1, 0], [-1, -1, 0]]) * 2 * UNIT
+        full_traj = Dot()
+        for name_traj, traj in zip(("sos", "rrt"), (sos, rrt)):
+            for with_full_traj in (True, False):
+                self.remove(full_traj)
+                if with_full_traj:
+                    full_traj = get_traj(traj)
+                    self.add(full_traj)
+                for t in range(len(sos[0])):
+
+                    self.caption(name_traj + f"{t}/{len(sos[0])}")
+                    # move cars
+                    for i in range(4):
+                        self.cars[i].move_to([traj[2*i, t], traj[2*i+1, t], 0])
+                        self.circles[i].move_to([traj[2*i, t], traj[2*i+1, t], 0])
+
+                    # move pedesterians
+                    for ped, circ, p, v in zip(self.pedestrians[1:], self.circles[5:], ped_pos, ped_vel):
+                        ped.move_to(p + t/len(sos[0]) * v)
+                        circ.move_to(p + t/len(sos[0]) * v)
+
+                    self.wait(WAIT_TIME)
+
+
+def get_traj(traj):
+    paths = []
+    for i, c in enumerate(COLORS):
+        path = VMobject()
+        path.set_points_as_corners(list(zip(traj[2*i, :], traj[2*i+1, :], [0] * len(traj[0])))).set_color(c)
+        # path = DashedVMobject(path)
+        paths.append(path)
+    return VGroup(*paths)

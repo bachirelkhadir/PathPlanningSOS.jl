@@ -21,11 +21,11 @@ include("plot_helpers.jl")
 num_cars = 4
 car_rad = .2
 obs_rad = .2
-obs_pos = [[-1, 1], [1, 1],
-           [0, 0]
+obs_pos = [[-1, 1], # [1, 1],
+           # [0, 0]
            ]
-obs_vel = [[2, -2], [-2, -2],
-           [0, 0]
+obs_vel = [[2, -2], # [-1, -1],
+           # [0, 0]
            ]
 
 g_obstacles = [
@@ -42,8 +42,9 @@ n = 2*num_cars # dimension of the space
 max_deg_uv = 2 # degree of moment relaxation
 num_pieces = 10 # number of linear pieces
 num_iterations=20 # number of iterations of the heuristic
-weight_lenght= .08 # trade off between minimizing length and rank
-random_seed = 0 # random seed used to initialize the heuristic
+weight_lenght= .18 # trade off between minimizing length and rank
+random_seed = 1 # random seed used to initialize the heuristic
+
 a = [0., -1., 1., 0., 0., 1., -1., 0.]
 b = [0., 1., -1., 0., 0., -1., 1., 0.]
 # a = a .+ rand(Float32, 8) ./ 5.
@@ -67,6 +68,7 @@ obstacles = [
 
 # compute optimal piece-wise linear trajectory
 @show now()
+@show random_seed
 opt_trajectory = find_path_using_heuristic(n, obstacles, edge_size, a, b,
                                            max_deg_uv, num_pieces, solver,
                                            weight_lenght,
@@ -74,14 +76,16 @@ opt_trajectory = find_path_using_heuristic(n, obstacles, edge_size, a, b,
                                            seed=random_seed)
 
 plot_sequence(opt_trajectory, edge_size, g_plots)
-plot_animation(opt_trajectory, edge_size, g_plots)
+#####################################################################
+# end
+# plot_animation(opt_trajectory, edge_size, g_plots)
 
 ##############
 # RRT
 ##############
 
 include("rrt.jl")
-path_found, node_positions, graph_edges = rrt_find_path_tv(n, a, b, check_collision_tv, check_collision_segment_tv; num_iterations=100000, step_size=.3, radius_goal=2.)
+path_found, node_positions, graph_edges = rrt_find_path_tv(n, a, b, check_collision_tv, check_collision_segment_tv; num_iterations=1000000, step_size=.3, radius_goal=2.)
 println("@ ", Dates.format(now(), "HH:MM:SS"))
 @show path_found
 opt_trajectory_rrt = t-> rrt_nodes_to_path_tv(node_positions, graph_edges, t)[1:end-1]
@@ -105,11 +109,19 @@ println("@ ", Dates.format(now(), "HH:MM:SS"))
 plot_sequence(opt_trajectory_nlp, edge_size, g_plots)
 
 
+
+include("benchmark.jl")
+benchmark(opt_trajectory)
+benchmark(opt_trajectory_rrt)
+
+if false
 writedlm( "csv/computed_trajectory_sos.csv",  hcat(opt_trajectory.(0:.05:1)...), ',')
 writedlm( "csv/computed_trajectory_rrt.csv",  hcat(opt_trajectory_rrt.(0:.05:1)...), ',')
 writedlm( "csv/computed_trajectory_nlp.csv",  hcat(opt_trajectory_nlp.(0:.05:1)...), ',')
-if false
     plot_sequence(opt_trajectory, edge_size, g_plots)
     plot_sequence(opt_trajectory_rrt, edge_size, g_plots)
     plot_sequence(opt_trajectory_nlp, edge_size, g_plots)
+end
+
+if false
 end

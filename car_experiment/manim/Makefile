@@ -16,4 +16,10 @@ image:
 
 video:
 	manim $(filename)  $(scene) -p -q$q  -n $N  --leave_progress_bars && sleep 1
+
+all:
+	manim $(filename)  Trajectories --high_quality  --save_pngs --leave_progress_bars
+play:
+	xdg-open /home/bachir/Dev/PathPlanningSOS.jl/car_experiment/manim/media/videos/car_experiment/1080p60/Trajectories.mp4
+
 # end

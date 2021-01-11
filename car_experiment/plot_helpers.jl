@@ -3,8 +3,8 @@
 # and gives the location of the particle at time t.
 #
 function plot_sequence(opt_trajectory, edge_size, g_obstacles)
-    fig = figure("Car movement",figsize=(20,2)) # Create a new blank figure
-    N = 8
+    fig = figure("Car movement",figsize=(23,2)) # Create a new blank figure
+    N = 9
     car_colors = ["r", "g", "b", "m"]
 
     full_trajectory = hcat(opt_trajectory.(0:.05:1)...)
@@ -22,7 +22,7 @@ function plot_sequence(opt_trajectory, edge_size, g_obstacles)
             PathPlanningSOS.plot_levelset((x, y) -> g(1/(N-1) * t, x, y))
         end
         for i=1:num_cars
-            plt.gcf().gca().add_artist(plt.Circle(xt[2*i-1:2*i], radius_car, color=car_colors[i], fill=true))
+            plt.gcf().gca().add_artist(plt.Circle(xt[2*i-1:2*i], car_rad, color=car_colors[i], fill=true))
             if t == 0
                 PyPlot.plot(full_trajectory[2*i-1, :], full_trajectory[2*i, :], alpha=.5, color=car_colors[i], ls="--")
             end
@@ -49,7 +49,7 @@ function plot_animation(opt_trajectory, edge_size, g_obstacles)
         PathPlanningSOS.plot_levelset((x, y) -> g(t, x, y))
         end
         for i=1:num_cars
-            plt.gcf().gca().add_artist(plt.Circle(xt[2*i-1:2*i], radius_car, color=car_colors[i], fill=true))
+            plt.gcf().gca().add_artist(plt.Circle(xt[2*i-1:2*i], car_rad, color=car_colors[i], fill=true))
         end
 
         fn_index = lpad(i, 3, "0")
