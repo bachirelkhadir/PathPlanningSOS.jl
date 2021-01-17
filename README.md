@@ -12,7 +12,7 @@ This package contains the code that was used in the numerical experiments of the
 For computational tractability, our global moment optimization approach motivates an iterative motion planner that outperforms competing sampling-based and nonlinear optimization baselines. Our method natively handles continuous time constraints without any need for time discretization, and has the potential to scale better with dimensions compared to popular sampling-based methods.
 
 <a href="https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/Path_Planing_Proofs.pdf">Proofs.</a>
-
+<a href="https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/Numerical_experiment.pdf">Some numerical experiments.</a>
 
 <a href="https://youtu.be/8VXckZWe-VQ"><img alt="Path Planning using SOS - Example 1" src="https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/path_planning_animation.gif" height=250px/></a> <a href="https://youtu.be/6ThKwE0B9yA"><img alt="Path Planning using SOS - Example 2" src="https://raw.githubusercontent.com/bachirelkhadir/PathPlanningSOS.jl/master/doc/path_planning_animation_2.gif" height=250px/></a>
 
